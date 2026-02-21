@@ -12,25 +12,25 @@ export function TabNavigation() {
       <TabsList className="w-full justify-start border-b border-robin-gray-dark bg-transparent p-0 rounded-none h-auto">
         <TabsTrigger 
           value="my-vaults"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3"
+          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3 cursor-pointer"
         >
           My Vaults
         </TabsTrigger>
         <TabsTrigger 
           value="create"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3"
+          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3 cursor-pointer"
         >
           Create Vault
         </TabsTrigger>
         <TabsTrigger 
           value="explore"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3"
+          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3 cursor-pointer"
         >
           Explore Vaults
         </TabsTrigger>
         <TabsTrigger 
           value="manage"
-          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3"
+          className="rounded-none border-b-2 border-transparent data-[state=active]:border-robin-teal data-[state=active]:bg-transparent px-4 py-3 cursor-pointer"
         >
           Manage Vault
         </TabsTrigger>

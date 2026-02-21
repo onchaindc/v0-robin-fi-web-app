@@ -131,7 +131,8 @@
   }
 
   .glass-card-dark {
-    @apply bg-card backdrop-blur-xl border border-primary/10 shadow-[0_8px_32px_rgba(0, 0, 0, 0.3), inset_0_1px_0_rgba(255, 255, 255, 0.1)] rounded-3xl;
+    @apply bg-card backdrop-blur-xl border border-primary/10 rounded-3xl;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .glass-button {

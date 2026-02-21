@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+
+const ThemeContext = createContext<{ theme: string; toggleTheme: () => void } | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState('dark')
@@ -18,6 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const toggleTheme = () => {
+    if (!isMounted) return // Prevent toggle before mount
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
     localStorage.setItem('theme', newTheme)
@@ -28,18 +31,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  if (!isMounted) return <>{children}</>
-
+  // ALWAYS wrap in Provider, even before mount
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   )
 }
-
-import { createContext, useContext } from 'react'
-
-const ThemeContext = createContext<{ theme: string; toggleTheme: () => void } | undefined>(undefined)
 
 export function useTheme() {
   const context = useContext(ThemeContext)

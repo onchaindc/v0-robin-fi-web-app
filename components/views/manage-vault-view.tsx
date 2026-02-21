@@ -5,55 +5,74 @@ import { useAccount } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Loader2, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { Loader2, ArrowUpRight, ArrowDownLeft, RotateCw } from 'lucide-react'
+
+interface ManageVaultViewProps {
+  vaultId: string
+}
 
 interface VaultDetails {
   id: string
   name: string
+  description: string
   balance: string
   apy: number
-  rebalanceFrequency: string
+  tvl: string
+  assets: string[]
 }
 
-export function ManageVaultView() {
+const VAULT_DATA: Record<string, VaultDetails> = {
+  '1': {
+    id: '1',
+    name: 'Tech Diversified',
+    description: 'Exposure to TSLA, AMZN, NFLX',
+    balance: '$12,500',
+    apy: 15.2,
+    tvl: '$4.2M',
+    assets: ['TSLA', 'AMZN', 'NFLX'],
+  },
+  '2': {
+    id: '2',
+    name: 'Growth Portfolio',
+    description: 'PLTR, AMD, and balanced assets',
+    balance: '$8,750',
+    apy: 22.8,
+    tvl: '$2.8M',
+    assets: ['PLTR', 'AMD', 'TSLA'],
+  },
+  'tech-leaders': {
+    id: 'tech-leaders',
+    name: 'Tech Leaders',
+    description: 'TSLA, AMZN, NFLX exposure',
+    balance: '$0',
+    apy: 18.5,
+    tvl: '$8.4M',
+    assets: ['TSLA', 'AMZN', 'NFLX'],
+  },
+}
+
+export function ManageVaultView({ vaultId }: ManageVaultViewProps) {
   const { isConnected } = useAccount()
   const [isHydrated, setIsHydrated] = useState(false)
-  const [selectedVault, setSelectedVault] = useState<VaultDetails | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [action, setAction] = useState<'deposit' | 'withdraw' | 'rebalance'>('deposit')
   const [amount, setAmount] = useState('')
+
+  const vault = VAULT_DATA[vaultId]
 
   useEffect(() => {
     setIsHydrated(true)
   }, [])
 
-  const mockVaults: VaultDetails[] = [
-    {
-      id: '1',
-      name: 'Stable Growth',
-      balance: '$5,000.00',
-      apy: 12.5,
-      rebalanceFrequency: 'Monthly',
-    },
-    {
-      id: '2',
-      name: 'Yield Max',
-      balance: '$2,500.00',
-      apy: 28.3,
-      rebalanceFrequency: 'Weekly',
-    },
-  ]
-
   const handleTransaction = async () => {
-    if (!selectedVault || !amount) return
+    if (!amount) return
 
     setIsLoading(true)
     // Simulate blockchain transaction
     await new Promise(resolve => setTimeout(resolve, 2000))
 
     console.log(`[v0] ${action} transaction:`, {
-      vault: selectedVault.name,
+      vault: vault.name,
       amount,
     })
 
@@ -63,146 +82,132 @@ export function ManageVaultView() {
 
   if (!isHydrated || !isConnected) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="py-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-robin-gray-light mb-2">Manage Vault</h2>
-          <p className="text-robin-gray">Deposit, withdraw, or rebalance your vault</p>
+          <h2 className="text-3xl font-bold mb-2">Manage Vault</h2>
+          <p className="text-muted-foreground">Deposit, withdraw, or rebalance your vault</p>
         </div>
-        <div className="text-center py-12 bg-robin-darker rounded-lg border border-robin-gray-dark">
-          <p className="text-robin-gray mb-4">Connect your wallet to manage vaults</p>
-          <p className="text-robin-gray text-sm">Use the Connect Wallet button in the header to get started</p>
+        <div className="glass-card-dark p-12 rounded-2xl text-center">
+          <p className="text-muted-foreground mb-4">Connect your wallet to manage vaults</p>
+          <p className="text-sm text-muted-foreground">Use the Connect Wallet button in the header to get started</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!vault) {
+    return (
+      <div className="py-8">
+        <div className="glass-card-dark p-12 rounded-2xl text-center">
+          <p className="text-muted-foreground">Vault not found</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-robin-gray-light mb-2">Manage Vault</h2>
-        <p className="text-robin-gray">Deposit, withdraw, or rebalance your vault</p>
+    <div className="py-8">
+      {/* Vault Header */}
+      <div className="mb-8 pb-8 border-b border-border">
+        <h2 className="text-3xl font-bold mb-2">{vault.name}</h2>
+        <p className="text-muted-foreground mb-6">{vault.description}</p>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="glass-card-dark p-4 rounded-xl">
+            <p className="text-sm text-muted-foreground mb-1">Your Balance</p>
+            <p className="text-2xl font-bold text-primary">{vault.balance}</p>
+          </div>
+          <div className="glass-card-dark p-4 rounded-xl">
+            <p className="text-sm text-muted-foreground mb-1">APY</p>
+            <p className="text-2xl font-bold text-primary">{vault.apy}%</p>
+          </div>
+          <div className="glass-card-dark p-4 rounded-xl">
+            <p className="text-sm text-muted-foreground mb-1">Total TVL</p>
+            <p className="text-2xl font-bold text-primary">{vault.tvl}</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Vault Selection */}
-        <div>
-          <Label className="text-robin-gray-light mb-3 block">Select Vault</Label>
-          <div className="space-y-2">
-            {mockVaults.map(vault => (
-              <button
-                key={vault.id}
-                onClick={() => setSelectedVault(vault)}
-                className={`w-full p-4 rounded border text-left transition-colors ${
-                  selectedVault?.id === vault.id
-                    ? 'bg-robin-teal border-robin-teal text-robin-dark'
-                    : 'border-robin-gray-dark bg-robin-darker text-robin-gray-light hover:border-robin-teal'
-                }`}
-              >
-                <div className="font-semibold">{vault.name}</div>
-                <div className={`text-sm ${selectedVault?.id === vault.id ? 'text-robin-dark/70' : 'text-robin-gray'}`}>
-                  {vault.balance}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Action Panel */}
+        <div className="lg:col-span-1">
+          <div className="glass-card-dark p-6 rounded-2xl space-y-6">
+            <div>
+              <h3 className="font-bold text-lg mb-4">Manage Position</h3>
 
-        {/* Management Panel */}
-        {selectedVault && (
-          <div className="lg:col-span-2">
-            {/* Vault Details */}
-            <div className="bg-robin-darker border border-robin-gray-dark rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-robin-gray-light mb-4">{selectedVault.name}</h3>
-
-              <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-robin-gray-dark">
-                <div>
-                  <p className="text-robin-gray text-sm">Current Balance</p>
-                  <p className="text-xl font-semibold text-robin-teal">{selectedVault.balance}</p>
-                </div>
-                <div>
-                  <p className="text-robin-gray text-sm">APY</p>
-                  <p className="text-xl font-semibold text-robin-teal">{selectedVault.apy}%</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-robin-gray text-sm">Rebalance Frequency</p>
-                <p className="text-robin-gray-light">{selectedVault.rebalanceFrequency}</p>
-              </div>
-            </div>
-
-            {/* Action Tabs */}
-            <div className="space-y-4">
-              <div className="flex gap-2 mb-6">
-                {(['deposit', 'withdraw', 'rebalance'] as const).map(act => (
+              {/* Action Tabs */}
+              <div className="grid grid-cols-3 gap-2 mb-6">
+                {(['deposit', 'withdraw', 'rebalance'] as const).map((actionType) => (
                   <button
-                    key={act}
-                    onClick={() => setAction(act)}
-                    className={`px-4 py-2 rounded font-semibold transition-colors ${
-                      action === act
-                        ? 'bg-robin-teal text-robin-dark'
-                        : 'bg-robin-darker border border-robin-gray-dark text-robin-gray-light hover:border-robin-teal'
+                    key={actionType}
+                    onClick={() => setAction(actionType)}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                      action === actionType
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/70'
                     }`}
                   >
-                    {act.charAt(0).toUpperCase() + act.slice(1)}
+                    {actionType.charAt(0).toUpperCase() + actionType.slice(1)}
                   </button>
                 ))}
               </div>
 
-              {/* Action Form */}
-              <div className="bg-robin-darker border border-robin-gray-dark rounded-lg p-6">
-                {action !== 'rebalance' && (
-                  <div className="mb-4">
-                    <Label htmlFor="amount" className="text-robin-gray-light mb-2 block">
-                      Amount
-                    </Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="0.00"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="bg-robin-dark border-robin-gray-dark text-robin-gray-light placeholder:text-robin-gray"
-                      step="0.01"
-                      min="0"
-                    />
-                  </div>
-                )}
+              {/* Amount Input */}
+              {action !== 'rebalance' && (
+                <div className="space-y-2 mb-4">
+                  <Label htmlFor="amount" className="text-foreground">
+                    Amount ({action === 'deposit' ? 'ETH' : 'Shares'})
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="0.0"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="glass-card border-border"
+                  />
+                </div>
+              )}
 
-                <Button
-                  onClick={handleTransaction}
-                  disabled={isLoading || (action !== 'rebalance' && !amount)}
-                  className="w-full bg-robin-teal text-robin-dark hover:bg-robin-teal-light font-semibold py-6 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : action === 'deposit' ? (
-                    <>
-                      <ArrowDownLeft className="w-4 h-4 mr-2" />
-                      Deposit
-                    </>
-                  ) : action === 'withdraw' ? (
-                    <>
-                      <ArrowUpRight className="w-4 h-4 mr-2" />
-                      Withdraw
-                    </>
-                  ) : (
-                    'Rebalance Vault'
-                  )}
-                </Button>
-              </div>
+              {/* Action Button */}
+              <Button
+                onClick={handleTransaction}
+                disabled={isLoading || (!amount && action !== 'rebalance')}
+                className="w-full gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    {action === 'deposit' && <ArrowDownLeft className="w-4 h-4" />}
+                    {action === 'withdraw' && <ArrowUpRight className="w-4 h-4" />}
+                    {action === 'rebalance' && <RotateCw className="w-4 h-4" />}
+                    {action.charAt(0).toUpperCase() + action.slice(1)}
+                  </>
+                )}
+              </Button>
             </div>
           </div>
-        )}
+        </div>
 
-        {!selectedVault && (
-          <div className="lg:col-span-2 bg-robin-darker border border-robin-gray-dark rounded-lg p-8 text-center">
-            <p className="text-robin-gray">Select a vault to manage</p>
+        {/* Info Panel */}
+        <div className="lg:col-span-2">
+          <div className="glass-card-dark p-6 rounded-2xl">
+            <h3 className="font-bold text-lg mb-4">Portfolio Composition</h3>
+            <div className="space-y-3">
+              {vault.assets.map((asset) => (
+                <div key={asset} className="flex items-center justify-between p-3 rounded-lg bg-muted/20">
+                  <span className="font-medium">{asset}</span>
+                  <span className="text-sm text-muted-foreground">{Math.round(100 / vault.assets.length)}%</span>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

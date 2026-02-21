@@ -17,6 +17,11 @@ interface Vault {
 export function MyVaultsView() {
   const { address, isConnected } = useAccount()
   const [vaults, setVaults] = useState<Vault[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   useEffect(() => {
     // Simulate loading user's vaults
@@ -46,14 +51,16 @@ export function MyVaultsView() {
     }
   }, [isConnected, address])
 
-  if (!isConnected) {
+  if (!isHydrated || !isConnected) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center py-12">
-          <p className="text-robin-gray text-lg mb-4">Connect your wallet to view your vaults</p>
-          <div className="bg-robin-darker p-8 rounded-lg border border-robin-gray-dark inline-block">
-            <p className="text-robin-gray-light">Use the Connect Wallet button in the header to get started</p>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-robin-gray-light mb-2">My Vaults</h2>
+          <p className="text-robin-gray">Manage and monitor your vault positions</p>
+        </div>
+        <div className="text-center py-12 bg-robin-darker rounded-lg border border-robin-gray-dark">
+          <p className="text-robin-gray mb-4">Connect your wallet to view your vaults</p>
+          <p className="text-robin-gray text-sm">Use the Connect Wallet button in the header to get started</p>
         </div>
       </div>
     )

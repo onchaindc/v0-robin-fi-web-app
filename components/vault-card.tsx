@@ -10,33 +10,40 @@ interface VaultCardProps {
   apy: number
   tvl: string
   assets: string[]
+  balance?: string
   onSelect?: () => void
 }
 
-export function VaultCard({ id, name, description, apy, tvl, assets, onSelect }: VaultCardProps) {
+export function VaultCard({ id, name, description, apy, tvl, assets, balance, onSelect }: VaultCardProps) {
   return (
-    <div className="border border-robin-gray-dark rounded-lg p-6 bg-robin-dark hover:border-robin-teal transition-colors">
+    <div className="glass-card-dark p-6 rounded-2xl hover:border-primary/40 transition-all duration-300 hover:shadow-lg cursor-pointer group">
       <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-robin-gray-light">{name}</h3>
-          <p className="text-sm text-robin-gray mt-1">{description}</p>
+        <div className="flex-1">
+          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{name}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
         </div>
-        <div className="flex items-center gap-1 px-3 py-1 bg-robin-darker rounded-full">
-          <TrendingUp className="w-4 h-4 text-robin-teal" />
-          <span className="text-sm font-semibold text-robin-teal">{apy}%</span>
+        <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full ml-4 flex-shrink-0">
+          <TrendingUp className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold text-primary">{apy}%</span>
         </div>
       </div>
 
-      <div className="space-y-3 mb-4 pb-4 border-b border-robin-gray-dark">
+      <div className="space-y-3 mb-4 pb-4 border-b border-border">
         <div className="flex justify-between">
-          <span className="text-sm text-robin-gray">TVL</span>
-          <span className="text-sm font-semibold text-robin-gray-light">{tvl}</span>
+          <span className="text-sm text-muted-foreground">TVL</span>
+          <span className="text-sm font-semibold text-foreground">{tvl}</span>
         </div>
+        {balance && (
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Your Balance</span>
+            <span className="text-sm font-semibold text-foreground">{balance}</span>
+          </div>
+        )}
         <div>
-          <span className="text-sm text-robin-gray block mb-2">Assets</span>
+          <span className="text-sm text-muted-foreground block mb-2">Assets</span>
           <div className="flex flex-wrap gap-2">
             {assets.map((asset) => (
-              <span key={asset} className="text-xs px-2 py-1 bg-robin-darker rounded text-robin-gray-light">
+              <span key={asset} className="text-xs px-2 py-1 bg-primary/10 rounded-md text-primary font-medium">
                 {asset}
               </span>
             ))}
@@ -46,9 +53,9 @@ export function VaultCard({ id, name, description, apy, tvl, assets, onSelect }:
 
       <Button 
         onClick={onSelect}
-        className="w-full bg-robin-teal text-robin-dark hover:bg-robin-teal-light font-semibold"
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all"
       >
-        Select Vault
+        View Details
         <ArrowUpRight className="w-4 h-4 ml-2" />
       </Button>
     </div>

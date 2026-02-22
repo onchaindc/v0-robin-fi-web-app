@@ -1,44 +1,30 @@
-'use client'
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { WagmiProvider } from "wagmi";
+import { http } from "viem";
+import type { Chain } from "viem";
 
-import React from 'react'
-import { WagmiProvider, createConfig, http } from 'wagmi'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import '@rainbow-me/rainbowkit/styles.css'
-import { ThemeProvider } from './theme-provider'
-
-// Create Wagmi config with Robinhood Testnet
-const config = createConfig({
-  chains: [
-    {
-      id: 2020,
-      name: 'Robinhood Testnet',
-      nativeCurrency: { name: 'XRD', symbol: 'XRD', decimals: 18 },
-      rpcUrls: {
-        default: { http: ['https://babylon-testnet.rpc.radixdlt.com:443/'] },
-      },
-      blockExplorers: {
-        default: { name: 'Radix Explorer', url: 'https://testnet.radixscan.io' },
-      },
-    },
-  ] as const,
-  transports: {
-    2020: http('https://babylon-testnet.rpc.radixdlt.com:443/'),
+const robinhoodTestnet: Chain = {
+  id: 46630,
+  name: "Robinhood Chain Testnet",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://rpc.testnet.chain.robinhood.com/rpc"] },
+    public: { http: ["https://rpc.testnet.chain.robinhood.com/rpc"] },
   },
-})
+  blockExplorers: {
+    default: {
+      name: "Robinhood Explorer",
+      // use the explorer URL from Robinhood docs if they provide one for your build
+      url: "https://docs.robinhood.com/chain/",
+    },
+  },
+};
 
-const queryClient = new QueryClient()
-
-export function Web3Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <ThemeProvider>
-      <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider>
-            {children}
-          </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </ThemeProvider>
-  )
-}
+const config = getDefaultConfig({
+  appName: "RobinFi",
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+  chains: [robinhoodTestnet],
+  transports: {
+    [robinhoodTestnet.id]: http("https://rpc.testnet.chain.robinhood.com/rpc"),
+  },
+});

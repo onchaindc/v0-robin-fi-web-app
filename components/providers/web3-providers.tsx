@@ -1,14 +1,7 @@
-"use client";
-
-import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider, getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { http } from "viem";
-import type { ReactNode } from "react";
 import type { Chain } from "viem";
-
-const queryClient = new QueryClient();
 
 const robinhoodTestnet: Chain = {
   id: 46630,
@@ -19,27 +12,19 @@ const robinhoodTestnet: Chain = {
     public: { http: ["https://rpc.testnet.chain.robinhood.com/rpc"] },
   },
   blockExplorers: {
-    default: { name: "Robinhood", url: "https://docs.robinhood.com/chain/" },
+    default: {
+      name: "Robinhood Explorer",
+      // use the explorer URL from Robinhood docs if they provide one for your build
+      url: "https://docs.robinhood.com/chain/",
+    },
   },
 };
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "default_test_id_robinfi";
-
 const config = getDefaultConfig({
   appName: "RobinFi",
-  projectId: projectId,
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
   chains: [robinhoodTestnet],
   transports: {
     [robinhoodTestnet.id]: http("https://rpc.testnet.chain.robinhood.com/rpc"),
   },
 });
-
-export function Web3Providers({ children }: { children: ReactNode }) {
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>{children}</RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-}

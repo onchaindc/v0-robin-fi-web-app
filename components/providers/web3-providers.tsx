@@ -23,9 +23,11 @@ const robinhoodTestnet: Chain = {
   },
 };
 
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "default_test_id_robinfi";
+
 const config = getDefaultConfig({
   appName: "RobinFi",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+  projectId: projectId,
   chains: [robinhoodTestnet],
   transports: {
     [robinhoodTestnet.id]: http("https://rpc.testnet.chain.robinhood.com/rpc"),

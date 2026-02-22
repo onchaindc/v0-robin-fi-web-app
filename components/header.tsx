@@ -18,16 +18,18 @@ export function Header() {
 
   let themeContext: { theme: string; toggleTheme: () => void } | null = null
   try {
-    themeContext = { theme, toggleTheme: () => {
-      const newTheme = theme === 'dark' ? 'light' : 'dark'
-      setTheme(newTheme)
-      localStorage.setItem('theme', newTheme)
-      if (newTheme === 'light') {
-        document.documentElement.classList.remove('dark')
-      } else {
-        document.documentElement.classList.add('dark')
+    themeContext = {
+      theme, toggleTheme: () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark'
+        setTheme(newTheme)
+        localStorage.setItem('theme', newTheme)
+        if (newTheme === 'light') {
+          document.documentElement.classList.remove('dark')
+        } else {
+          document.documentElement.classList.add('dark')
+        }
       }
-    }}
+    }
   } catch (e) {
     // Fallback if context not available
   }

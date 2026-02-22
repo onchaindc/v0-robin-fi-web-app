@@ -1,14 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useTheme } from '@/components/providers/theme-provider'
 import { Sun, Moon, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function Header() {
-  const { theme, toggleTheme } = useTheme()
+  const [isMounted, setIsMounted] = useState(false)
+  const [theme, setTheme] = useState('dark')
   const [showSettings, setShowSettings] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+    setTheme(localStorage.getItem('theme') || 'dark')
+  }, [])
+
+  let themeContext: { theme: string; toggleTheme: () => void } | null = null
+  try {
+    themeContext = { theme, toggleTheme: () => {
+      const newTheme = theme === 'dark' ? 'light' : 'dark'
+      setTheme(newTheme)
+      localStorage.setItem('theme', newTheme)
+      if (newTheme === 'light') {
+        document.documentElement.classList.remove('dark')
+      } else {
+        document.documentElement.classList.add('dark')
+      }
+    }}
+  } catch (e) {
+    // Fallback if context not available
+  }
 
   return (
     <>
@@ -25,7 +47,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleTheme}
+              onClick={() => themeContext?.toggleTheme()}
               className="rounded-lg"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
@@ -66,7 +88,7 @@ export function Header() {
                     variant={theme === 'light' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => {
-                      if (theme !== 'light') toggleTheme()
+                      if (theme !== 'light') themeContext?.toggleTheme()
                     }}
                     className="flex-1"
                   >
@@ -76,7 +98,7 @@ export function Header() {
                     variant={theme === 'dark' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => {
-                      if (theme !== 'dark') toggleTheme()
+                      if (theme !== 'dark') themeContext?.toggleTheme()
                     }}
                     className="flex-1"
                   >

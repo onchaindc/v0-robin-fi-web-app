@@ -178,10 +178,10 @@ importers:
         specifier: ^22
         version: 22.19.11
       '@types/react':
-        specifier: 19.2.14
+        specifier: ^19.2.14
         version: 19.2.14
       '@types/react-dom':
-        specifier: 19.2.3
+        specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
       postcss:
         specifier: ^8.5
@@ -7828,7 +7828,7 @@ snapshots:
       '@types/uuid': 8.3.4
       '@types/ws': 8.18.1
       buffer: 6.0.3
-      eventemitter3: 5.0.1
+      eventemitter3: 5.0.4
       uuid: 8.3.2
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     optionalDependencies:

@@ -6,24 +6,39 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { ThemeProvider } from './theme-provider'
+import { arbitrumSepolia } from 'wagmi/chains'
 
-// Create Wagmi config with Robinhood Testnet
-const config = createConfig({
-  chains: [
-    {
-      id: 2020,
-      name: 'Robinhood Testnet',
-      nativeCurrency: { name: 'XRD', symbol: 'XRD', decimals: 18 },
-      rpcUrls: {
-        default: { http: ['https://babylon-testnet.rpc.radixdlt.com:443/'] },
-      },
-      blockExplorers: {
-        default: { name: 'Radix Explorer', url: 'https://testnet.radixscan.io' },
-      },
+// Define Robinhood Chain Testnet (built on Arbitrum)
+const robinhoodChain = {
+  id: 421614, // Arbitrum Sepolia for now (update with actual Robinhood Chain ID when available)
+  name: 'Robinhood Chain Testnet',
+  nativeCurrency: {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    decimals: 18
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://sepolia-rollup.arbitrum.io/rpc']
     },
-  ] as const,
+    public: {
+      http: ['https://sepolia-rollup.arbitrum.io/rpc']
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'Arbiscan',
+      url: 'https://sepolia.arbiscan.io'
+    },
+  },
+  testnet: true,
+} as const
+
+// Create Wagmi config
+const config = createConfig({
+  chains: [robinhoodChain],
   transports: {
-    2020: http('https://babylon-testnet.rpc.radixdlt.com:443/'),
+    [robinhoodChain.id]: http(),
   },
 })
 

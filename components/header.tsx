@@ -1,31 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useTheme } from '@/components/providers/theme-provider'
 import { Sun, Moon, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function Header() {
-  const { theme, toggleTheme } = useTheme()
+  const [isMounted, setIsMounted] = useState(false)
+  const [theme, setTheme] = useState('dark')
   const [showSettings, setShowSettings] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+    setTheme(localStorage.getItem('theme') || 'dark')
+  }, [])
+
+  let themeContext: { theme: string; toggleTheme: () => void } | null = null
+  try {
+    themeContext = {
+      theme, toggleTheme: () => {
+        const newTheme = theme === 'dark' ? 'light' : 'dark'
+        setTheme(newTheme)
+        localStorage.setItem('theme', newTheme)
+        if (newTheme === 'light') {
+          document.documentElement.classList.remove('dark')
+        } else {
+          document.documentElement.classList.add('dark')
+        }
+      }
+    }
+  } catch (e) {
+    // Fallback if context not available
+  }
 
   return (
     <>
       <header className="sticky top-0 z-50 glass-card-dark border-b border-primary/20">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-robin-pink flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-robin-pink flex items-center justify-center">
               <span className="font-serif font-bold text-primary-foreground">R</span>
             </div>
-            <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-primary to-robin-pink bg-clip-text text-transparent">RobinFi</h1>
+            <h1 className="text-2xl font-serif font-bold text-primary">
+              RobinFi
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleTheme}
+              onClick={() => themeContext?.toggleTheme()}
               className="rounded-lg"
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
@@ -66,7 +92,7 @@ export function Header() {
                     variant={theme === 'light' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => {
-                      if (theme !== 'light') toggleTheme()
+                      if (theme !== 'light') themeContext?.toggleTheme()
                     }}
                     className="flex-1"
                   >
@@ -76,7 +102,7 @@ export function Header() {
                     variant={theme === 'dark' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => {
-                      if (theme !== 'dark') toggleTheme()
+                      if (theme !== 'dark') themeContext?.toggleTheme()
                     }}
                     className="flex-1"
                   >

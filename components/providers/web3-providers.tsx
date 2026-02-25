@@ -1,30 +1,59 @@
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { WagmiProvider } from "wagmi";
-import { http } from "viem";
-import type { Chain } from "viem";
+'use client'
 
-const robinhoodTestnet: Chain = {
-  id: 46630,
-  name: "Robinhood Chain Testnet",
-  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+import React from 'react'
+import { WagmiProvider, createConfig, http } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import '@rainbow-me/rainbowkit/styles.css'
+import { ThemeProvider } from './theme-provider'
+import { arbitrumSepolia } from 'wagmi/chains'
+
+// Define Robinhood Chain Testnet (built on Arbitrum)
+const robinhoodChain = {
+  id: 421614, // Arbitrum Sepolia for now (update with actual Robinhood Chain ID when available)
+  name: 'Robinhood Chain Testnet',
+  nativeCurrency: {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    decimals: 18
+  },
   rpcUrls: {
-    default: { http: ["https://rpc.testnet.chain.robinhood.com/rpc"] },
-    public: { http: ["https://rpc.testnet.chain.robinhood.com/rpc"] },
+    default: {
+      http: ['https://sepolia-rollup.arbitrum.io/rpc']
+    },
+    public: {
+      http: ['https://sepolia-rollup.arbitrum.io/rpc']
+    },
   },
   blockExplorers: {
     default: {
-      name: "Robinhood Explorer",
-      // use the explorer URL from Robinhood docs if they provide one for your build
-      url: "https://docs.robinhood.com/chain/",
+      name: 'Arbiscan',
+      url: 'https://sepolia.arbiscan.io'
     },
   },
-};
+  testnet: true,
+} as const
 
-const config = getDefaultConfig({
-  appName: "RobinFi",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-  chains: [robinhoodTestnet],
+// Create Wagmi config
+const config = createConfig({
+  chains: [robinhoodChain],
   transports: {
-    [robinhoodTestnet.id]: http("https://rpc.testnet.chain.robinhood.com/rpc"),
+    [robinhoodChain.id]: http(),
   },
-});
+})
+
+const queryClient = new QueryClient()
+
+export function Web3Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider>
+            {children}
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ThemeProvider>
+  )
+}

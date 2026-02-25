@@ -42,7 +42,9 @@ export function Header() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-robin-pink flex items-center justify-center">
               <span className="font-serif font-bold text-primary-foreground">R</span>
             </div>
-            <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-primary to-robin-pink bg-clip-text text-transparent">RobinFi</h1>
+            <h1 className="text-2xl font-serif font-bold text-primary">
+              RobinFi
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">

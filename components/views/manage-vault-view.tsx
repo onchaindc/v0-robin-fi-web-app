@@ -142,11 +142,10 @@ export function ManageVaultView({ vaultId }: ManageVaultViewProps) {
                   <button
                     key={actionType}
                     onClick={() => setAction(actionType)}
-                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                      action === actionType
+                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${action === actionType
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/70'
-                    }`}
+                      }`}
                   >
                     {actionType.charAt(0).toUpperCase() + actionType.slice(1)}
                   </button>

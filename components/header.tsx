@@ -39,7 +39,7 @@ export function Header() {
       <header className="sticky top-0 z-50 glass-card-dark border-b border-primary/20">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-robin-pink flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-robin-pink flex items-center justify-center">
               <span className="font-serif font-bold text-primary-foreground">R</span>
             </div>
             <h1 className="text-2xl font-serif font-bold text-primary">

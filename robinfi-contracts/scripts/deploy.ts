@@ -1,13 +1,25 @@
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
+import hre from "hardhat";
 
 async function main() {
-  const RobinFi = await ethers.getContractFactory("RobinFi");
-  const robinfi = await RobinFi.deploy();
-  await robinfi.waitForDeployment();
-  console.log("RobinFi deployed to:", await robinfi.getAddress());
+  // get a provider from hardhat network config
+  const provider = new ethers.JsonRpcProvider(process.env.ROBINHOOD_RPC_URL || "https://testnet.rpc.chain.robinhood.com");
+  // use your hardhat account (from PRIVATE_KEY in .env)
+  const pk = process.env.PRIVATE_KEY;
+  if (!pk) throw new Error("Missing PRIVATE_KEY in .env");
+
+  const wallet = new ethers.Wallet(pk, provider);
+
+  const artifact = await hre.artifacts.readArtifact("RobinFi");
+  const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
+
+  const contract = await factory.deploy();
+  await contract.waitForDeployment();
+
+  console.log("RobinFi deployed to:", await contract.getAddress());
 }
 
-main().catch((error) => {
-  console.error(error);
+main().catch((err) => {
+  console.error(err);
   process.exitCode = 1;
 });

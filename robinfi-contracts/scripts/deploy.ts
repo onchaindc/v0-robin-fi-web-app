@@ -3,7 +3,9 @@ import hre from "hardhat";
 
 async function main() {
   // get a provider from hardhat network config
-  const provider = new ethers.JsonRpcProvider(process.env.ROBINHOOD_RPC_URL || "https://testnet.rpc.chain.robinhood.com");
+  const provider = new ethers.JsonRpcProvider(
+    process.env.ROBINHOOD_RPC_URL || "https://testnet.rpc.chain.robinhood.com"
+  );
   // use your hardhat account (from PRIVATE_KEY in .env)
   const pk = process.env.PRIVATE_KEY;
   if (!pk) throw new Error("Missing PRIVATE_KEY in .env");

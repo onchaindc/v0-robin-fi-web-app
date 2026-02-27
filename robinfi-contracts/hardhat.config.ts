@@ -9,7 +9,7 @@ const config: HardhatUserConfig = {
   networks: {
     robinhoodTestnet: {
       type: "http",
-      url: "https://testnet.rpc.chain.robinhood.com",
+      url: "https://rpc.testnet.chain.robinhood.com",
       chainId: 46630,
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },

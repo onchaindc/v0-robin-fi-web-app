@@ -28,7 +28,7 @@ export function MyVaultsView({ onSelectVault, onCreate, onExplore }: MyVaultsVie
   )
   const created = useMemo(() => createdVaults.map(toVaultView), [createdVaults])
 
-  const deposited = positions.reduce((sum, vault) => sum + vault.balanceEth, 0)
+  const deposited = positions.reduce((sum, vault) => sum + vault.valueEth, 0)
   const isLoading = isLoadingCreated && created.length === 0
 
   if (!isLoading && positions.length === 0 && created.length === 0) {

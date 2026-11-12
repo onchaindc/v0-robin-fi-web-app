@@ -1,11 +1,11 @@
 import { parseAbi } from 'viem'
 
-/**
- * Address of the deployed RobinFiFactory. Set NEXT_PUBLIC_FACTORY_ADDRESS in the
- * environment after running `npm run deploy` inside robinfi-contracts.
- */
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
+/**
+ * Address of the deployed RobinFiFactory. Set NEXT_PUBLIC_FACTORY_ADDRESS in the
+ * environment after running `npx hardhat run scripts/deploy.ts` inside robinfi-contracts.
+ */
 export const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_FACTORY_ADDRESS ??
   ZERO_ADDRESS) as `0x${string}`
 
@@ -35,13 +35,55 @@ export const VAULT_ABI = parseAbi([
   'function rebalance(address[] tokens, uint256[] weightsBps)',
 ])
 
-/** Stock tokens used to build baskets. Replace with live tokenized equities when available. */
+function tokenAddress(value: string | undefined, fallback: string): string {
+  return value && /^0x[a-fA-F0-9]{40}$/.test(value) ? value : fallback
+}
+
+/**
+ * Stock tokens used to build baskets. The deploy script deploys mock tokens; put
+ * their addresses in NEXT_PUBLIC_STOCK_* to replace the placeholders.
+ */
 export const STOCK_TOKENS = [
-  { symbol: 'TSLA', name: 'Tesla', address: '0x0000000000000000000000000000000000000001' },
-  { symbol: 'AMZN', name: 'Amazon', address: '0x0000000000000000000000000000000000000002' },
-  { symbol: 'NFLX', name: 'Netflix', address: '0x0000000000000000000000000000000000000003' },
-  { symbol: 'PLTR', name: 'Palantir', address: '0x0000000000000000000000000000000000000004' },
-  { symbol: 'AMD', name: 'AMD', address: '0x0000000000000000000000000000000000000005' },
+  {
+    symbol: 'TSLA',
+    name: 'Tesla',
+    address: tokenAddress(
+      process.env.NEXT_PUBLIC_STOCK_TSLA,
+      '0x0000000000000000000000000000000000000001',
+    ),
+  },
+  {
+    symbol: 'AMZN',
+    name: 'Amazon',
+    address: tokenAddress(
+      process.env.NEXT_PUBLIC_STOCK_AMZN,
+      '0x0000000000000000000000000000000000000002',
+    ),
+  },
+  {
+    symbol: 'NFLX',
+    name: 'Netflix',
+    address: tokenAddress(
+      process.env.NEXT_PUBLIC_STOCK_NFLX,
+      '0x0000000000000000000000000000000000000003',
+    ),
+  },
+  {
+    symbol: 'PLTR',
+    name: 'Palantir',
+    address: tokenAddress(
+      process.env.NEXT_PUBLIC_STOCK_PLTR,
+      '0x0000000000000000000000000000000000000004',
+    ),
+  },
+  {
+    symbol: 'AMD',
+    name: 'AMD',
+    address: tokenAddress(
+      process.env.NEXT_PUBLIC_STOCK_AMD,
+      '0x0000000000000000000000000000000000000005',
+    ),
+  },
 ] as const
 
 export type StockSymbol = (typeof STOCK_TOKENS)[number]['symbol']

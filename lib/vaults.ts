@@ -13,12 +13,15 @@ export type VaultView = {
   tokens: string[]
   weights: number[]
   balanceEth: number
+  valueEth: number
   isPreview: boolean
 }
 
 export function toVaultView(vault: VaultSummary): VaultView {
   const totalAssets = Number(formatEther(vault.totalAssets))
+  const totalSupply = Number(formatEther(vault.totalSupply))
   const balance = Number(formatEther(vault.balance))
+  const value = totalSupply > 0 ? (balance * totalAssets) / totalSupply : 0
 
   return {
     address: vault.address,
@@ -31,6 +34,7 @@ export function toVaultView(vault: VaultSummary): VaultView {
     tokens: vault.tokens.map(addressToSymbol),
     weights: vault.weights,
     balanceEth: balance,
+    valueEth: value,
     isPreview: false,
   }
 }
@@ -50,6 +54,7 @@ export const PREVIEW_VAULTS: VaultView[] = [
     tokens: ['TSLA', 'AMZN', 'NFLX'],
     weights: [0.4, 0.35, 0.25],
     balanceEth: 0,
+    valueEth: 0,
     isPreview: true,
   },
   {
@@ -62,6 +67,7 @@ export const PREVIEW_VAULTS: VaultView[] = [
     tokens: ['PLTR', 'AMD', 'TSLA'],
     weights: [0.45, 0.3, 0.25],
     balanceEth: 0,
+    valueEth: 0,
     isPreview: true,
   },
   {
@@ -74,6 +80,7 @@ export const PREVIEW_VAULTS: VaultView[] = [
     tokens: ['TSLA', 'AMZN', 'NFLX', 'PLTR', 'AMD'],
     weights: [0.2, 0.2, 0.2, 0.2, 0.2],
     balanceEth: 0,
+    valueEth: 0,
     isPreview: true,
   },
 ]

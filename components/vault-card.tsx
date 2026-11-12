@@ -49,7 +49,7 @@ export function VaultCard({ vault, onSelect }: VaultCardProps) {
         <div>
           <p className="eyebrow">{vault.balanceEth > 0 ? 'Your position' : 'Shares'}</p>
           <p className="numeric mt-1.5 text-lg">
-            {formatEth(vault.balanceEth > 0 ? vault.balanceEth : vault.shares)}{' '}
+            {formatEth(vault.balanceEth > 0 ? vault.valueEth : vault.shares)}{' '}
             <span className="text-xs text-muted-foreground">
               {vault.balanceEth > 0 ? 'ETH' : 'issued'}
             </span>
@@ -89,9 +89,10 @@ export function VaultCard({ vault, onSelect }: VaultCardProps) {
         <button
           type="button"
           onClick={onSelect}
-          className="rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary"
+          disabled={!vault.address || !onSelect}
+          className="rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:text-inherit"
         >
-          Open vault
+          {vault.address ? 'Open vault' : 'Preview only'}
         </button>
       </div>
     </article>

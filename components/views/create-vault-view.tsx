@@ -32,6 +32,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
   const [mode, setMode] = useState<AllocationMode>('equal')
   const [customWeights, setCustomWeights] = useState<Record<string, string>>({})
   const [initialDeposit, setInitialDeposit] = useState('')
+  const [formError, setFormError] = useState('')
 
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract()
   const { data: receipt, isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
@@ -86,12 +87,28 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
     )
   }
 
+  const customValid =
+    mode === 'equal' ||
+    (totalBps === 10_000 && weightedTokens.every((token) => token.bps > 0))
+
   const canContinue =
     step === 0
       ? name.trim().length > 0 && symbol.trim().length > 0
       : step === 1
-        ? selected.length > 0 && (mode === 'equal' || totalBps === 10_000)
+        ? selected.length > 0 && customValid
         : true
+
+  const distributeEvenly = () => {
+    if (selected.length === 0) return
+    const base = Math.floor(10_000 / selected.length)
+    const remainder = 10_000 - base * selected.length
+    const next: Record<string, string> = {}
+    selected.forEach((token, index) => {
+      const bps = base + (index === 0 ? remainder : 0)
+      next[token] = (bps / 100).toFixed(2)
+    })
+    setCustomWeights(next)
+  }
 
   const handleNext = () => {
     if (!canContinue) return
@@ -104,6 +121,14 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
 
   const submit = () => {
     if (!isFactoryConfigured) return
+
+    let deposit = 0n
+    try {
+      deposit = parseEther(initialDeposit || '0')
+    } catch {
+      setFormError('Enter a valid ETH amount for the initial deposit.')
+      return
+    }
 
     const tokens = weightedTokens
       .map((token) => STOCK_TOKENS.find((stock) => stock.symbol === token.symbol))
@@ -120,8 +145,9 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
         tokens.map((token) => token.address as `0x${string}`),
         weightedTokens.map((token) => BigInt(token.bps)),
       ],
-      value: parseEther(initialDeposit || '0'),
+      value: deposit,
     })
+    setFormError('')
   }
 
   const isSubmitting = isPending || isConfirming
@@ -195,7 +221,10 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
                   step="0.001"
                   min="0"
                   value={initialDeposit}
-                  onChange={(event) => setInitialDeposit(event.target.value)}
+                  onChange={(event) => {
+                    setInitialDeposit(event.target.value)
+                    setFormError('')
+                  }}
                   placeholder="0.0"
                   className="h-11 rounded-xl bg-background/60"
                 />
@@ -299,15 +328,28 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
                       </div>
                     </div>
                   ))}
-                  <p
-                    className={cn(
-                      'numeric text-xs',
-                      totalBps === 10_000 ? 'text-primary' : 'text-accent',
-                    )}
-                  >
-                    {totalBps / 100}% allocated ·{' '}
-                    {totalBps === 10_000 ? 'balanced' : 'must total 100%'}
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p
+                      className={cn(
+                        'numeric text-xs',
+                        customValid ? 'text-primary' : 'text-accent',
+                      )}
+                    >
+                      {totalBps / 100}% allocated ·{' '}
+                      {totalBps !== 10_000
+                        ? 'must total 100%'
+                        : weightedTokens.some((token) => token.bps === 0)
+                          ? 'every weight must be above 0%'
+                          : 'balanced'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={distributeEvenly}
+                      className="text-xs text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      Distribute evenly
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -376,9 +418,9 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
           </div>
         )}
 
-        {error && (
+        {(formError || error) && (
           <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-            {error.message.split('\n')[0]}
+            {formError || error?.message.split('\n')[0]}
           </p>
         )}
 
@@ -438,7 +480,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
           {isSuccess ? ' confirmed' : ' submitted'}
         </p>
       )}
-      {isPending === false && hash && !isSuccess && (
+      {!isPending && !isConfirming && hash && !isSuccess && (
         <button
           type="button"
           onClick={() => reset()}

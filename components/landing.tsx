@@ -114,7 +114,7 @@ function VaultTicket() {
             </span>
             <p className="mt-3 font-serif text-2xl">{vault.name}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {vault.tokens.length} names · equal-weight
+              {vault.tokens.length} names · weighted
             </p>
           </div>
           <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
@@ -171,7 +171,7 @@ function Constituents() {
   return (
     <section className="border-y border-border/70">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-10 gap-y-5 px-4 py-6">
-        <p className="eyebrow shrink-0">Index constituents</p>
+        <p className="eyebrow shrink-0">Sample weights</p>
         <div className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-4">
           {TICKER.map((item) => (
             <div key={item.symbol} className="flex items-center gap-3">
@@ -257,8 +257,8 @@ function HowItWorks() {
             <h2 className="display mt-4 text-4xl sm:text-5xl">Three moves, one vault.</h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Built on the ERC-4626 tokenized-vault standard, so shares are legible to every
-            wallet, aggregator and lending market from day one.
+            Built on ERC-4626-style vault accounting, so shares are legible to wallets and
+            composable with the rest of DeFi.
           </p>
         </div>
 

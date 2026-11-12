@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useVault } from '@/hooks/use-vaults'
-import { VAULT_ABI } from '@/lib/contracts'
+import { VAULT_ABI, addressToSymbol } from '@/lib/contracts'
 import { EXPLORER_URL, robinhoodChain } from '@/lib/chain'
 import { formatEth, shortAddress } from '@/lib/vaults'
 import { cn } from '@/lib/utils'
@@ -92,7 +92,7 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
   const rebalanceEntries = vault
     ? vault.tokens.map((token, index) => ({
         token,
-        label: token,
+        label: addressToSymbol(token),
         original: (vault.weights[index] ?? 0) * 100,
         value: weights[token] ?? String((vault.weights[index] ?? 0) * 100),
       }))
@@ -101,26 +101,38 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
     (sum, entry) => sum + (Number.parseFloat(entry.value) || 0),
     0,
   )
+  const rebalanceValid =
+    Math.round(rebalanceTotal) === 100 &&
+    rebalanceEntries.every((entry) => (Number.parseFloat(entry.value) || 0) > 0)
 
   const handleTransaction = () => {
     if (!address || !vault) return
 
+    let parsed = 0n
+    if (action !== 'rebalance') {
+      try {
+        parsed = parseEther(amount)
+      } catch {
+        setStatus('error')
+        setTimeout(() => setStatus('idle'), 4000)
+        return
+      }
+    }
+
     if (action === 'deposit') {
-      if (!amount) return
       writeContract({
         address: vaultAddress,
         abi: VAULT_ABI,
         functionName: 'deposit',
-        args: [parseEther(amount), address],
-        value: parseEther(amount),
+        args: [parsed, address],
+        value: parsed,
       })
     } else if (action === 'withdraw') {
-      if (!amount) return
       writeContract({
         address: vaultAddress,
         abi: VAULT_ABI,
         functionName: 'redeem',
-        args: [parseEther(amount), address, address],
+        args: [parsed, address, address],
       })
     } else {
       writeContract({
@@ -135,21 +147,44 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
     }
   }
 
+  const redeemTooHigh =
+    action === 'withdraw' && Boolean(amount) && Number(amount) > userShares
+
   const canSubmit =
     action === 'rebalance'
-      ? isCreator && Math.round(rebalanceTotal) === 100
-      : Boolean(amount) && Number(amount) > 0
+      ? isCreator && rebalanceValid
+      : Boolean(amount) && Number(amount) > 0 && !redeemTooHigh
 
   if (isLoading && !vault) {
     return (
       <div className="space-y-6">
-        <div className="h-10 w-56 animate-pulse rounded-lg bg-secondary/50" />
+        <div className="h-10 w-56 animate-pulse rounded-sm bg-secondary/50" />
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="h-28 animate-pulse rounded-2xl bg-secondary/40" />
           ))}
         </div>
         <div className="h-72 animate-pulse rounded-2xl bg-secondary/30" />
+      </div>
+    )
+  }
+
+  if (!isLoading && !vault) {
+    return (
+      <div className="panel mx-auto max-w-xl p-10 text-center">
+        <p className="font-serif text-2xl">This vault could not be loaded</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          The address may not be a RobinFi vault on {robinhoodChain.name}, or the RPC is
+          unreachable. You can inspect it on the explorer.
+        </p>
+        <a
+          href={`${EXPLORER_URL}/address/${vaultAddress}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+        >
+          View address <ExternalLink className="size-3" />
+        </a>
       </div>
     )
   }
@@ -244,11 +279,17 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
                 <Label htmlFor="amount" className="text-sm">
                   Amount
                 </Label>
-                <span className="text-[11px] text-muted-foreground">
-                  {action === 'deposit'
-                    ? 'ETH'
-                    : `Shares · max ${formatEth(userShares, 4)}`}
-                </span>
+                {action === 'deposit' ? (
+                  <span className="text-[11px] text-muted-foreground">ETH</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setAmount(formatEther(vault?.balance ?? 0n))}
+                    className="text-[11px] text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    MAX {formatEth(userShares, 4)} {vault?.symbol ?? 'shares'}
+                  </button>
+                )}
               </div>
               <Input
                 id="amount"
@@ -262,10 +303,17 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
                 disabled={isLoadingTx}
                 className="mt-2 h-11 rounded-xl bg-background/60"
               />
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                {action === 'deposit'
-                  ? 'Shares are minted against the vault’s current NAV.'
-                  : 'Redeeming burns shares and returns your pro-rata ETH.'}
+              <p
+                className={cn(
+                  'mt-2 text-[11px]',
+                  redeemTooHigh ? 'text-destructive' : 'text-muted-foreground',
+                )}
+              >
+                {redeemTooHigh
+                  ? `You only hold ${formatEth(userShares, 4)} shares.`
+                  : action === 'deposit'
+                    ? 'Shares are minted against the vault’s current NAV.'
+                    : 'Redeeming burns shares and returns your pro-rata ETH.'}
               </p>
             </div>
           ) : (
@@ -278,8 +326,8 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
               )}
               {rebalanceEntries.map((entry) => (
                 <div key={entry.token} className="flex items-center gap-3">
-                  <span className="w-24 truncate text-xs text-muted-foreground">
-                    {entry.label.slice(0, 6)}…{entry.label.slice(-4)}
+                  <span className="numeric w-24 truncate text-xs text-muted-foreground">
+                    {entry.label}
                   </span>
                   <div className="relative flex-1">
                     <Input
@@ -303,14 +351,13 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
                   </div>
                 </div>
               ))}
-              <p
-                className={cn(
-                  'numeric text-xs',
-                  Math.round(rebalanceTotal) === 100 ? 'text-primary' : 'text-accent',
-                )}
-              >
+              <p className={cn('numeric text-xs', rebalanceValid ? 'text-primary' : 'text-accent')}>
                 {rebalanceTotal}% allocated
-                {Math.round(rebalanceTotal) === 100 ? ' · valid' : ' · must equal 100%'}
+                {rebalanceValid
+                  ? ' · valid'
+                  : Math.round(rebalanceTotal) !== 100
+                    ? ' · must equal 100%'
+                    : ' · every weight must be above 0%'}
               </p>
             </div>
           )}
@@ -385,7 +432,7 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
                 <div key={token}>
                   <div className="flex items-center justify-between text-sm">
                     <span className="numeric text-muted-foreground">
-                      {token.slice(0, 6)}…{token.slice(-4)}
+                      {addressToSymbol(token)}
                     </span>
                     <span className="numeric">{(weight * 100).toFixed(2)}%</span>
                   </div>

@@ -97,7 +97,9 @@ export function ConnectSheet({
               </span>
               <span className="flex-1">
                 <span className="block text-sm font-medium">
-                  {detected ? walletName(detected) : 'Browser wallet'}
+                  {connectors[0]?.name === 'Browser wallet'
+                    ? walletName(detected)
+                    : (connectors[0]?.name ?? walletName(detected))}
                 </span>
                 <span className="block text-xs text-muted-foreground">
                   {detected
@@ -152,9 +154,13 @@ export function WalletChip({ className }: { className?: string }) {
 
   const copy = async () => {
     if (!address) return
-    await navigator.clipboard.writeText(address)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    try {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Clipboard can be blocked outside secure contexts.
+    }
   }
 
   return (

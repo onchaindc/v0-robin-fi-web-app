@@ -144,6 +144,15 @@ export const injectedConnector = createConnector((config) => {
       }
     },
 
+    async switchChain({ chainId: target }) {
+      await switchTo(target)
+      chainId = target
+      config.emitter.emit('change', { chainId: target })
+      const chain = config.chains.find((item) => item.id === target)
+      if (!chain) throw new Error(`Chain ${target} is not configured`)
+      return chain
+    },
+
     async disconnect() {
       accounts = []
       chainId = undefined

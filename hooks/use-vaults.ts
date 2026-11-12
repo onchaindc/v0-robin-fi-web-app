@@ -28,7 +28,7 @@ export function useAllVaultAddresses() {
     address: FACTORY_ADDRESS,
     abi: FACTORY_ABI,
     functionName: 'getAllVaults',
-    query: { enabled: isFactoryConfigured },
+    query: { enabled: isFactoryConfigured, staleTime: 0 },
   })
 
   return {
@@ -45,7 +45,7 @@ export function useCreatorVaultAddresses(creator?: `0x${string}`) {
     abi: FACTORY_ABI,
     functionName: 'getVaultsByCreator',
     args: creator ? [creator] : undefined,
-    query: { enabled: isFactoryConfigured && Boolean(creator) },
+    query: { enabled: isFactoryConfigured && Boolean(creator), staleTime: 0 },
   })
 
   return {
@@ -82,8 +82,8 @@ export function useVaultSummaries(addresses: readonly `0x${string}`[], account?:
     return addresses.flatMap((address, index) => {
       const offset = index * 8
       const name = data[offset]?.result as string | undefined
-      const symbol = data[offset + 1]?.result as string | undefined
-      if (!name || !symbol) return []
+      if (!name) return []
+      const symbol = (data[offset + 1]?.result as string | undefined) ?? 'VLT'
 
       const basket = data[offset + 6]?.result as
         | readonly [`0x${string}`[], readonly bigint[]]
@@ -134,22 +134,27 @@ export function useVault(address?: `0x${string}`, account?: `0x${string}`) {
     query: { enabled: Boolean(address) },
   })
 
-  const basket = data?.[6]?.result as readonly [`0x${string}`[], readonly bigint[]] | undefined
+  // Memoised so consumers can safely depend on the object in effects.
+  const vault = useMemo<VaultSummary | null>(() => {
+    const basketData = data?.[6]?.result as
+      | readonly [`0x${string}`[], readonly bigint[]]
+      | undefined
 
-  const vault: VaultSummary | null = address && data?.[0]?.result
-    ? {
-        address,
-        name: data[0].result as string,
-        symbol: data[1]?.result as string,
-        description: (data[2]?.result as string) ?? '',
-        creator: (data[3]?.result as `0x${string}`) ?? address,
-        totalAssets: (data[4]?.result as bigint) ?? 0n,
-        totalSupply: (data[5]?.result as bigint) ?? 0n,
-        tokens: (basket?.[0] ?? []) as `0x${string}`[],
-        weights: (basket?.[1] ?? []).map((weight) => Number(weight) / BPS_DENOMINATOR),
-        balance: (data[7]?.result as bigint) ?? 0n,
-      }
-    : null
+    if (!address || !data?.[0]?.result) return null
+
+    return {
+      address,
+      name: data[0].result as string,
+      symbol: (data[1]?.result as string | undefined) ?? 'VLT',
+      description: (data[2]?.result as string | undefined) ?? '',
+      creator: (data[3]?.result as `0x${string}` | undefined) ?? address,
+      totalAssets: (data[4]?.result as bigint | undefined) ?? 0n,
+      totalSupply: (data[5]?.result as bigint | undefined) ?? 0n,
+      tokens: (basketData?.[0] ?? []) as `0x${string}`[],
+      weights: (basketData?.[1] ?? []).map((weight) => Number(weight) / BPS_DENOMINATOR),
+      balance: (data[7]?.result as bigint | undefined) ?? 0n,
+    }
+  }, [address, data])
 
   return { vault, isLoading, refetch }
 }

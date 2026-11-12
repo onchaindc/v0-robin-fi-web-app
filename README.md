@@ -36,7 +36,7 @@ cd robinfi-contracts
 npm install
 # PRIVATE_KEY and optional ROBINHOOD_RPC_URL in .env
 npx hardhat compile
-npx tsx scripts/deploy.ts
+npx hardhat run scripts/deploy.ts --network robinhoodTestnet
 ```
 
 `scripts/deploy.ts` deploys five testnet stock tokens plus `VaultFactory` and prints:
@@ -46,8 +46,10 @@ npx tsx scripts/deploy.ts
 ```
 
 Wire the factory into the frontend with `NEXT_PUBLIC_FACTORY_ADDRESS` (in `.env.local`
-or Settings → Environment). Until it is set, Explore shows clearly-labelled sample
-baskets and vault creation is disabled.
+or Settings → Environment). Optionally map the deployed token addresses with
+`NEXT_PUBLIC_STOCK_TSLA`, `_AMZN`, `_NFLX`, `_PLTR`, `_AMD` so baskets display real
+tickers. Until the factory is set, Explore shows clearly-labelled sample baskets and
+vault creation is disabled.
 
 ### Contracts
 

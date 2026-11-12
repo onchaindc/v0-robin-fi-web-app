@@ -16,7 +16,7 @@ interface ExploreVaultsViewProps {
 
 export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
   const { address } = useAccount()
-  const { addresses, isLoading } = useAllVaultAddresses()
+  const { addresses, isLoading, isError } = useAllVaultAddresses()
   const { vaults } = useVaultSummaries(addresses, address)
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -86,9 +86,11 @@ export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
         <div className="mt-6 flex items-start gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] p-4 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-accent" />
           <p className="text-muted-foreground">
-            {isFactoryConfigured
-              ? 'No vaults have been created yet — these are sample baskets. Create the first one to see it here.'
-              : 'The factory is not deployed on this network yet, so these are sample baskets. Deploy the contracts and set NEXT_PUBLIC_FACTORY_ADDRESS to go live.'}
+            {isError
+              ? 'The factory could not be reached on this network. Check the RPC and factory address — the baskets below are samples.'
+              : isFactoryConfigured
+                ? 'No vaults have been created yet — these are sample baskets. Create the first one to see it here.'
+                : 'The factory is not deployed on this network yet, so these are sample baskets. Deploy the contracts and set NEXT_PUBLIC_FACTORY_ADDRESS to go live.'}
           </p>
         </div>
       )}
@@ -98,13 +100,20 @@ export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
           ? Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="panel h-80 animate-pulse bg-secondary/30" />
             ))
-          : filtered.map((vault) => (
-              <VaultCard
-                key={vault.address ?? vault.name}
-                vault={vault}
-                onSelect={() => vault.address && onSelectVault?.(vault.address)}
-              />
-            ))}
+          : filtered.map((vault) => {
+              const address = vault.address
+              return (
+                <VaultCard
+                  key={address ?? vault.name}
+                  vault={vault}
+                  onSelect={
+                    address && onSelectVault
+                      ? () => onSelectVault(address)
+                      : undefined
+                  }
+                />
+              )
+            })}
       </div>
 
       {!isLoading && filtered.length === 0 && (

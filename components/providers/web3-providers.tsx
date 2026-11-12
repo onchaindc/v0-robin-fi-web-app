@@ -6,32 +6,31 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { ThemeProvider } from './theme-provider'
-import { arbitrumSepolia } from 'wagmi/chains'
 
-// Define Robinhood Chain Testnet (built on Arbitrum)
+// Robinhood Chain Mainnet (Arbitrum Orbit L2, chain ID 4663)
 const robinhoodChain = {
-  id: 421614, // Arbitrum Sepolia for now (update with actual Robinhood Chain ID when available)
-  name: 'Robinhood Chain Testnet',
+  id: 4663,
+  name: 'Robinhood Chain',
   nativeCurrency: {
-    name: 'Ethereum',
+    name: 'Ether',
     symbol: 'ETH',
     decimals: 18
   },
   rpcUrls: {
     default: {
-      http: ['https://sepolia-rollup.arbitrum.io/rpc']
+      http: ['https://rpc.mainnet.chain.robinhood.com']
     },
     public: {
-      http: ['https://sepolia-rollup.arbitrum.io/rpc']
+      http: ['https://rpc.mainnet.chain.robinhood.com']
     },
   },
   blockExplorers: {
     default: {
-      name: 'Arbiscan',
-      url: 'https://sepolia.arbiscan.io'
+      name: 'Blockscout',
+      url: 'https://robinhoodchain.blockscout.com'
     },
   },
-  testnet: true,
+  testnet: false,
 } as const
 
 // Create Wagmi config

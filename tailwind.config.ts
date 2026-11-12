@@ -10,32 +10,34 @@ const config: Config = {
     extend: {
       colors: {
         robin: {
-          dark: '#0a0e14',
-          darker: '#060809',
-          teal: '#00d4aa',
-          'teal-dark': '#00a881',
-          'teal-light': '#33e0b8',
-          pink: '#ff6b9d',
-          gray: '#a0a0a0',
-          'gray-dark': '#5a5a5a',
-          'gray-light': '#e8e8e8',
+          dark: '#070a09',
+          deeper: '#040605',
+          surface: '#0d1211',
+          mint: '#bff2d3',
+          moss: '#6fae8c',
+          sand: '#e3c89a',
+          gray: '#8b968f',
+          'gray-light': '#f0eee5',
         },
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-mono)', 'monospace'],
-      },
-      backdropBlur: {
-        xl: '16px',
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       keyframes: {
-        'glow-pulse': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(0, 212, 170, 0.5)' },
-          '50%': { boxShadow: '0 0 40px rgba(0, 212, 170, 0.8)' },
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'drift': {
+          '0%, 100%': { transform: 'translate3d(0,0,0)' },
+          '50%': { transform: 'translate3d(0,-10px,0)' },
         },
       },
       animation: {
-        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+        'fade-up': 'fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
+        drift: 'drift 9s ease-in-out infinite',
       },
     },
   },

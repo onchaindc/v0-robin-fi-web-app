@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { Header } from './header'
 import { TabNavigation } from './tab-navigation'
-import { WelcomeView } from './views/welcome-view'
+import { Landing } from './landing'
 import { MyVaultsView } from './views/my-vaults-view'
 import { CreateVaultView } from './views/create-vault-view'
 import { ExploreVaultsView } from './views/explore-vaults-view'
@@ -12,23 +12,24 @@ import { ManageVaultView } from './views/manage-vault-view'
 
 export function RobinFiApp() {
   const { isConnected } = useAccount()
-  const [activeTab, setActiveTab] = useState('home')
-  const [selectedVaultId, setSelectedVaultId] = useState<string | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
+  const [activeTab, setActiveTab] = useState('my-vaults')
+  const [selectedVault, setSelectedVault] = useState<string | null>(null)
 
-  useEffect(() => {
-    setIsHydrated(true)
-  }, [])
-
-  const handleSelectVault = (vaultId: string) => {
-    setSelectedVaultId(vaultId)
+  const handleSelectVault = (vaultAddress: string) => {
+    setSelectedVault(vaultAddress)
     setActiveTab('manage')
   }
 
-  if (!isHydrated) {
+  const handleCreated = (vaultAddress: string) => {
+    setSelectedVault(vaultAddress)
+    setActiveTab('manage')
+  }
+
+  if (!isConnected) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Header showNav />
+        <Landing />
       </div>
     )
   }
@@ -36,23 +37,30 @@ export function RobinFiApp() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
-      {!isConnected ? (
-        <WelcomeView />
-      ) : (
-        <main className="py-8">
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} showManageTab={!!selectedVaultId}>
-            <div className="max-w-6xl mx-auto px-4">
-              {activeTab === 'my-vaults' && <MyVaultsView onSelectVault={handleSelectVault} />}
-              {activeTab === 'create' && <CreateVaultView />}
-              {activeTab === 'explore' && <ExploreVaultsView onSelectVault={handleSelectVault} />}
-              {activeTab === 'manage' && selectedVaultId && (
-                <ManageVaultView vaultId={selectedVaultId} />
-              )}
-            </div>
-          </TabNavigation>
-        </main>
-      )}
+      <main className="pb-24">
+        <TabNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          showManageTab={Boolean(selectedVault)}
+        >
+          <div className="mx-auto max-w-6xl px-4 pt-10">
+            {activeTab === 'my-vaults' && (
+              <MyVaultsView
+                onSelectVault={handleSelectVault}
+                onCreate={() => setActiveTab('create')}
+                onExplore={() => setActiveTab('explore')}
+              />
+            )}
+            {activeTab === 'explore' && (
+              <ExploreVaultsView onSelectVault={handleSelectVault} />
+            )}
+            {activeTab === 'create' && <CreateVaultView onCreated={handleCreated} />}
+            {activeTab === 'manage' && selectedVault && (
+              <ManageVaultView vaultAddress={selectedVault as `0x${string}`} />
+            )}
+          </div>
+        </TabNavigation>
+      </main>
     </div>
   )
 }

@@ -1,131 +1,118 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useAccount } from 'wagmi'
+import { Info, Search } from 'lucide-react'
 import { VaultCard } from '@/components/vault-card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search } from 'lucide-react'
+import { useAllVaultAddresses, useVaultSummaries } from '@/hooks/use-vaults'
+import { isFactoryConfigured } from '@/lib/contracts'
+import { PREVIEW_VAULTS, toVaultView } from '@/lib/vaults'
 
 interface ExploreVaultsViewProps {
-  onSelectVault?: (vaultId: string) => void
+  onSelectVault?: (vaultAddress: string) => void
 }
 
-const FEATURED_VAULTS = [
-  {
-    id: 'tech-leaders',
-    name: 'Tech Leaders',
-    description: 'TSLA, AMZN, NFLX exposure',
-    apy: 18.5,
-    tvl: '$8.4M',
-    assets: ['TSLA', 'AMZN', 'NFLX'],
-  },
-  {
-    id: 'enterprise-growth',
-    name: 'Enterprise Growth',
-    description: 'PLTR, AMD, TSLA portfolio',
-    apy: 22.3,
-    tvl: '$5.2M',
-    assets: ['PLTR', 'AMD', 'TSLA'],
-  },
-  {
-    id: 'innovation-fund',
-    name: 'Innovation Fund',
-    description: 'Balanced tech and growth stocks',
-    apy: 19.7,
-    tvl: '$6.8M',
-    assets: ['AMZN', 'NFLX', 'PLTR'],
-  },
-  {
-    id: 'semiconductor-play',
-    name: 'Semiconductor Play',
-    description: 'AMD and advanced tech focus',
-    apy: 25.1,
-    tvl: '$3.1M',
-    assets: ['AMD', 'TSLA', 'AMZN'],
-  },
-  {
-    id: 'streaming-kings',
-    name: 'Streaming Kings',
-    description: 'Netflix and digital media leaders',
-    apy: 21.2,
-    tvl: '$4.6M',
-    assets: ['NFLX', 'AMZN', 'PLTR'],
-  },
-  {
-    id: 'balanced-portfolio',
-    name: 'Balanced Mix',
-    description: 'Diversified across all 5 stocks',
-    apy: 20.4,
-    tvl: '$7.2M',
-    assets: ['TSLA', 'AMZN', 'NFLX', 'PLTR', 'AMD'],
-  },
-]
-
 export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState('apy')
+  const { address } = useAccount()
+  const { addresses, isLoading } = useAllVaultAddresses()
+  const { vaults } = useVaultSummaries(addresses, address)
 
-  const filteredVaults = FEATURED_VAULTS
-    .filter(vault =>
-      vault.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vault.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (sortBy === 'apy') return b.apy - a.apy
-      if (sortBy === 'tvl') {
-        const aVal = parseInt(a.tvl.replace(/[^0-9]/g, ''))
-        const bVal = parseInt(b.tvl.replace(/[^0-9]/g, ''))
-        return bVal - aVal
-      }
-      return 0
-    })
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState('tvl')
+
+  const onChain = useMemo(() => vaults.map(toVaultView), [vaults])
+  const usingPreview = onChain.length === 0
+  const source = usingPreview ? PREVIEW_VAULTS : onChain
+
+  const filtered = useMemo(() => {
+    return source
+      .filter(
+        (vault) =>
+          vault.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          vault.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          vault.tokens.some((token) =>
+            token.toLowerCase().includes(searchTerm.toLowerCase()),
+          ),
+      )
+      .sort((a, b) => {
+        if (sortBy === 'tvl') return b.tvlEth - a.tvlEth
+        if (sortBy === 'name') return a.name.localeCompare(b.name)
+        if (sortBy === 'position') return b.balanceEth - a.balanceEth
+        return 0
+      })
+  }, [source, searchTerm, sortBy])
 
   return (
-    <div className="py-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Explore Vaults</h2>
-        <p className="text-muted-foreground mb-6">Discover and invest in community vaults</p>
-
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search vaults by name or assets..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 glass-card-dark border-border text-foreground placeholder:text-muted-foreground"
-            />
-          </div>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="md:w-48 glass-card-dark border-border text-foreground">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="glass-card-dark border-border">
-              <SelectItem value="apy" className="text-foreground">Sort by APY</SelectItem>
-              <SelectItem value="tvl" className="text-foreground">Sort by TVL</SelectItem>
-              <SelectItem value="name" className="text-foreground">Sort by Name</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="animate-fade-up">
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p className="eyebrow">Marketplace</p>
+          <h2 className="display mt-3 text-4xl">Explore vaults</h2>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            Every basket is deployed by its creator and readable on-chain. Deposit ETH to take a
+            position.
+          </p>
         </div>
+        <span className="numeric rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground">
+          {source.length} vault{source.length === 1 ? '' : 's'}
+        </span>
       </div>
 
-      {/* Vaults Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVaults.map((vault) => (
-          <div key={vault.id} onClick={() => onSelectVault?.(vault.id)} className="cursor-pointer">
-            <VaultCard
-              {...vault}
-              onSelect={() => onSelectVault?.(vault.id)}
-            />
-          </div>
-        ))}
+      <div className="mt-8 flex flex-col gap-3 md:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, symbol or ticker…"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="h-11 rounded-xl border-border bg-card pl-10 text-sm"
+          />
+        </div>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="h-11 w-full rounded-xl border-border bg-card text-sm md:w-52">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="tvl">Highest TVL</SelectItem>
+            <SelectItem value="position">Your position</SelectItem>
+            <SelectItem value="name">Name</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {filteredVaults.length === 0 && (
-        <div className="glass-card-dark p-12 rounded-2xl text-center">
-          <p className="text-muted-foreground mb-2">No vaults found</p>
-          <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
+      {usingPreview && !isLoading && (
+        <div className="mt-6 flex items-start gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] p-4 text-sm">
+          <Info className="mt-0.5 size-4 shrink-0 text-accent" />
+          <p className="text-muted-foreground">
+            {isFactoryConfigured
+              ? 'No vaults have been created yet — these are sample baskets. Create the first one to see it here.'
+              : 'The factory is not deployed on this network yet, so these are sample baskets. Deploy the contracts and set NEXT_PUBLIC_FACTORY_ADDRESS to go live.'}
+          </p>
+        </div>
+      )}
+
+      <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="panel h-80 animate-pulse bg-secondary/30" />
+            ))
+          : filtered.map((vault) => (
+              <VaultCard
+                key={vault.address ?? vault.name}
+                vault={vault}
+                onSelect={() => vault.address && onSelectVault?.(vault.address)}
+              />
+            ))}
+      </div>
+
+      {!isLoading && filtered.length === 0 && (
+        <div className="panel mt-8 p-14 text-center">
+          <p className="font-serif text-xl">Nothing matches that search</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Try a ticker like TSLA, or clear the filters.
+          </p>
         </div>
       )}
     </div>

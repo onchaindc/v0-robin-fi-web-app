@@ -1,6 +1,7 @@
 'use client'
 
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Compass, LayoutGrid, Plus, SlidersHorizontal } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface TabNavigationProps {
   activeTab: string
@@ -9,41 +10,50 @@ interface TabNavigationProps {
   children: React.ReactNode
 }
 
-export function TabNavigation({ activeTab, onTabChange, showManageTab = false, children }: TabNavigationProps) {
+const TABS = [
+  { value: 'my-vaults', label: 'My vaults', icon: LayoutGrid },
+  { value: 'explore', label: 'Explore', icon: Compass },
+  { value: 'create', label: 'Create', icon: Plus },
+]
+
+export function TabNavigation({
+  activeTab,
+  onTabChange,
+  showManageTab = false,
+  children,
+}: TabNavigationProps) {
+  const tabs = showManageTab
+    ? [...TABS, { value: 'manage', label: 'Manage', icon: SlidersHorizontal }]
+    : TABS
+
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <div className="max-w-6xl mx-auto px-4">
-        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 rounded-none h-auto gap-1">
-          <TabsTrigger 
-            value="my-vaults"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 cursor-pointer text-sm font-medium transition-colors hover:text-primary"
-          >
-            My Vaults
-          </TabsTrigger>
-          <TabsTrigger 
-            value="create"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 cursor-pointer text-sm font-medium transition-colors hover:text-primary"
-          >
-            Create Vault
-          </TabsTrigger>
-          <TabsTrigger 
-            value="explore"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 cursor-pointer text-sm font-medium transition-colors hover:text-primary"
-          >
-            Explore Vaults
-          </TabsTrigger>
-          {showManageTab && (
-            <TabsTrigger 
-              value="manage"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 cursor-pointer text-sm font-medium transition-colors hover:text-primary"
-            >
-              Manage Vault
-            </TabsTrigger>
-          )}
-        </TabsList>
+    <div className="w-full">
+      <div className="sticky top-16 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 py-3">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.value
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => onTabChange(tab.value)}
+                className={cn(
+                  'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all',
+                  isActive
+                    ? 'bg-secondary text-foreground'
+                    : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground',
+                )}
+              >
+                <Icon className="size-3.5" />
+                {tab.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {children}
-    </Tabs>
+    </div>
   )
 }

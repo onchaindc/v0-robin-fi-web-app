@@ -6,10 +6,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from './theme-provider'
 import { robinhoodChain } from '@/lib/chain'
 import { injectedConnector } from '@/lib/wallet'
+import { walletConnectConnector, walletConnectProjectId } from '@/lib/wallet-connect'
 
 const config = createConfig({
   chains: [robinhoodChain],
-  connectors: [injectedConnector],
+  connectors: walletConnectProjectId
+    ? [injectedConnector, walletConnectConnector]
+    : [injectedConnector],
   transports: {
     [robinhoodChain.id]: http(
       process.env.NEXT_PUBLIC_ROBINHOOD_RPC_URL ?? 'https://rpc.testnet.chain.robinhood.com',

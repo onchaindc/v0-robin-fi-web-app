@@ -24,9 +24,19 @@ declare global {
   }
 }
 
+let activeProvider: Eip1193Provider | undefined
+
+/**
+ * EIP-6963 can announce several installed wallets. The picker stores the chosen
+ * one here so the single injected connector talks to the right extension.
+ */
+export function setActiveProvider(provider?: Eip1193Provider) {
+  activeProvider = provider
+}
+
 function getInjectedProvider(): Eip1193Provider | undefined {
   if (typeof window === 'undefined') return undefined
-  return window.ethereum
+  return activeProvider ?? window.ethereum
 }
 
 export function walletName(provider?: Eip1193Provider): string {
@@ -75,6 +85,34 @@ export const injectedConnector = createConnector((config) => {
     }
   }
 
+  // Listen to the provider that is actually in use, so multiple installed
+  // wallets (EIP-6963) report account and chain changes correctly.
+  const boundProviders = new Set<Eip1193Provider>()
+
+  function bindProvider(provider: Eip1193Provider) {
+    if (!provider.on || boundProviders.has(provider)) return
+    boundProviders.add(provider)
+
+    provider.on('accountsChanged', (next: never[]) => {
+      const list = next as unknown as Address[]
+      accounts = list
+      if (list.length === 0) {
+        config.emitter.emit('disconnect')
+      } else {
+        config.emitter.emit('change', { accounts: list })
+      }
+    })
+    provider.on('chainChanged', (next: never) => {
+      const id = Number(next)
+      chainId = id
+      config.emitter.emit('change', { chainId: id })
+    })
+    provider.on('disconnect', () => {
+      accounts = []
+      config.emitter.emit('disconnect')
+    })
+  }
+
   return {
     id: 'injected',
     name: 'Browser wallet',
@@ -82,30 +120,7 @@ export const injectedConnector = createConnector((config) => {
 
     async setup() {
       const provider = getInjectedProvider()
-      if (!provider?.on) return
-
-      const onAccountsChanged = (next: never[]) => {
-        const list = next as unknown as Address[]
-        accounts = list
-        if (list.length === 0) {
-          config.emitter.emit('disconnect')
-        } else {
-          config.emitter.emit('change', { accounts: list })
-        }
-      }
-      const onChainChanged = (next: never) => {
-        const id = Number(next)
-        chainId = id
-        config.emitter.emit('change', { chainId: id })
-      }
-      const onDisconnect = () => {
-        accounts = []
-        config.emitter.emit('disconnect')
-      }
-
-      provider.on('accountsChanged', onAccountsChanged)
-      provider.on('chainChanged', onChainChanged)
-      provider.on('disconnect', onDisconnect)
+      if (provider) bindProvider(provider)
     },
 
     async connect<withCapabilities extends boolean = false>({
@@ -113,6 +128,7 @@ export const injectedConnector = createConnector((config) => {
       withCapabilities,
     }: { chainId?: number; withCapabilities?: boolean | withCapabilities } = {}) {
       const provider = await requireProvider()
+      bindProvider(provider)
 
       accounts = (await provider.request({
         method: 'eth_requestAccounts',

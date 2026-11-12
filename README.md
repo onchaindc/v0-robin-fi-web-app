@@ -66,8 +66,11 @@ maker is the next contract milestone.
 
 ## Frontend behaviour
 
-- Wallet connect uses any injected EIP-1193 wallet (MetaMask, Rabby, Brave, Coinbase
-  extension) and switches/adds Robinhood Chain automatically.
+- Wallet connect opens a wallet picker: installed wallets are discovered via EIP-6963
+  (MetaMask, Rabby, Brave, Coinbase extension, …), with install links for popular
+  wallets. The chosen wallet switches/adds Robinhood Chain automatically.
+- WalletConnect QR pairing appears when `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is set
+  (create one at https://cloud.reown.com); the QR is rendered in-app.
 - Explore reads `getAllVaults()`, My vaults reads `getVaultsByCreator()` plus live
   share balances, and Create calls `createVault` with the initial deposit attached.
 - Manage reads name, description, NAV, supply and basket, and supports deposit,

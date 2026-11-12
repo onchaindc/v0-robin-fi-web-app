@@ -1,13 +1,57 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAccount, useBalance, useChainId, useConnect, useConnectors, useDisconnect, useSwitchChain } from 'wagmi'
-import { AlertTriangle, ArrowRight, Check, ChevronDown, Copy, ExternalLink, Loader2, LogOut, Wallet } from 'lucide-react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  useAccount,
+  useBalance,
+  useChainId,
+  useConnect,
+  useConnectors,
+  useDisconnect,
+  useSwitchChain,
+} from 'wagmi'
+import { QRCodeSVG } from 'qrcode.react'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  Copy,
+  ExternalLink,
+  Loader2,
+  LogOut,
+  QrCode,
+  Wallet,
+} from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { EXPLORER_URL, robinhoodChain } from '@/lib/chain'
-import { walletName, type Eip1193Provider } from '@/lib/wallet'
+import { setActiveProvider } from '@/lib/wallet'
+import {
+  setWalletConnectUriHandler,
+  walletConnectProjectId,
+} from '@/lib/wallet-connect'
+import { useDetectedWallets, type DetectedWallet } from '@/hooks/use-detected-wallets'
 import { formatEth, shortAddress } from '@/lib/vaults'
 import { cn } from '@/lib/utils'
+
+const POPULAR_WALLETS = [
+  { name: 'MetaMask', initial: 'M', color: '#f6851b', href: 'https://metamask.io/download/' },
+  {
+    name: 'Coinbase Wallet',
+    initial: 'C',
+    color: '#0052ff',
+    href: 'https://www.coinbase.com/wallet/downloads',
+  },
+  { name: 'Rabby', initial: 'R', color: '#8697ff', href: 'https://rabby.io/' },
+  { name: 'Trust Wallet', initial: 'T', color: '#3375bb', href: 'https://trustwallet.com/download' },
+] as const
 
 export function WalletButton({
   className,
@@ -51,93 +95,264 @@ export function ConnectSheet({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const detected = useDetectedWallets()
   const connectors = useConnectors()
-  const { connectAsync, isPending, error } = useConnect()
-  const [detected, setDetected] = useState<Eip1193Provider | undefined>()
+  const { connectAsync, isPending, error, reset } = useConnect()
+
+  const [pairingUri, setPairingUri] = useState<string>()
+  const [activeId, setActiveId] = useState<string>()
+  const [copied, setCopied] = useState(false)
+
+  const injectedConnector = connectors.find((connector) => connector.id === 'injected')
+  const wcConnector = connectors.find((connector) => connector.id === 'walletConnect')
 
   useEffect(() => {
-    setDetected(typeof window !== 'undefined' ? window.ethereum : undefined)
-  }, [])
+    if (open) return
+    setPairingUri(undefined)
+    setActiveId(undefined)
+    setWalletConnectUriHandler(undefined)
+    reset()
+  }, [open, reset])
 
-  const handleConnect = async () => {
-    const connector = connectors[0]
-    if (!connector) return
+  const handleInjected = async (wallet: DetectedWallet) => {
+    if (!injectedConnector) return
+    setActiveId(wallet.id)
+    setActiveProvider(wallet.provider)
+
     try {
-      await connectAsync({ connector, chainId: robinhoodChain.id })
+      await connectAsync({ connector: injectedConnector, chainId: robinhoodChain.id })
       onOpenChange(false)
     } catch {
-      // Error surfaced below.
+      // Error shown below.
+    }
+  }
+
+  const handleWalletConnect = async () => {
+    if (!wcConnector) return
+    setActiveId('walletConnect')
+    setWalletConnectUriHandler((uri) => setPairingUri(uri))
+
+    try {
+      await connectAsync({ connector: wcConnector, chainId: robinhoodChain.id })
+      onOpenChange(false)
+    } catch {
+      // Error shown below.
+    }
+  }
+
+  const copyUri = async () => {
+    if (!pairingUri) return
+    try {
+      await navigator.clipboard.writeText(pairingUri)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Clipboard can be blocked.
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 rounded-2xl border-border bg-card p-0">
-        <div className="p-6">
-          <DialogHeader>
-            <DialogTitle className="font-serif text-2xl font-medium">Connect a wallet</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              Use a browser wallet to create vaults and deposit on Robinhood Chain.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-6 space-y-2">
+      <DialogContent className="max-w-lg gap-0 rounded-2xl border-border bg-card p-0">
+        {pairingUri ? (
+          <div className="p-6">
             <button
               type="button"
-              onClick={handleConnect}
-              disabled={isPending || !detected}
-              className="flex w-full items-center gap-3 rounded-xl border border-border bg-background/50 p-3.5 text-left transition-colors hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => {
+                setPairingUri(undefined)
+                setActiveId(undefined)
+                reset()
+              }}
+              className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              <span className="grid size-9 place-items-center rounded-lg border border-border bg-secondary/60">
-                {isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Wallet className="size-4 text-primary" />
-                )}
-              </span>
-              <span className="flex-1">
-                <span className="block text-sm font-medium">
-                  {connectors[0]?.name === 'Browser wallet'
-                    ? walletName(detected)
-                    : (connectors[0]?.name ?? walletName(detected))}
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  {detected
-                    ? 'Detected in this browser'
-                    : 'No wallet extension detected'}
-                </span>
-              </span>
-              {detected ? (
-                <ArrowRight className="size-4 text-muted-foreground" />
-              ) : (
-                <ExternalLink className="size-4 text-muted-foreground" />
-              )}
+              <ArrowLeft className="size-3.5" /> All wallets
             </button>
 
-            {!detected && (
-              <a
-                href="https://metamask.io/download/"
-                target="_blank"
-                rel="noreferrer"
-                className="block rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                Install a wallet to continue
-              </a>
-            )}
+            <DialogHeader>
+              <DialogTitle className="font-serif text-2xl font-medium">
+                Scan with WalletConnect
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Open your mobile wallet and scan this code to pair.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-6 flex flex-col items-center">
+              <div className="rounded-2xl bg-white p-4">
+                <QRCodeSVG value={pairingUri} size={196} marginSize={0} />
+              </div>
+
+              <div className="mt-5 flex items-center gap-4 text-xs">
+                <button
+                  type="button"
+                  onClick={copyUri}
+                  className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+                  {copied ? 'Copied' : 'Copy pairing link'}
+                </button>
+                <a
+                  href={pairingUri}
+                  className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  Open in wallet <ExternalLink className="size-3" />
+                </a>
+              </div>
+
+              <p className="mt-6 flex items-center gap-2 text-[11px] text-muted-foreground">
+                {activeId === 'walletConnect' && isPending && (
+                  <Loader2 className="size-3 animate-spin" />
+                )}
+                Waiting for approval on your phone…
+              </p>
+            </div>
           </div>
+        ) : (
+          <div className="p-6">
+            <DialogHeader>
+              <DialogTitle className="font-serif text-2xl font-medium">Connect a wallet</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Choose a wallet to create vaults and deposit on {robinhoodChain.name}.
+              </DialogDescription>
+            </DialogHeader>
 
-          {error && (
-            <p className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
-              {error.message.split('\n')[0]}
+            <section className="mt-6">
+              <p className="eyebrow">Installed</p>
+
+              {detected.length > 0 ? (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {detected.map((wallet) => (
+                    <button
+                      key={wallet.id}
+                      type="button"
+                      onClick={() => handleInjected(wallet)}
+                      disabled={isPending}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-background/50 p-3 text-left transition-colors hover:border-primary/40 disabled:opacity-60"
+                    >
+                      <WalletAvatar name={wallet.name} icon={wallet.icon} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{wallet.name}</span>
+                        <span className="block text-[11px] text-muted-foreground">Detected</span>
+                      </span>
+                      {activeId === wallet.id && isPending ? (
+                        <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                      ) : (
+                        <ArrowRight className="size-3.5 text-muted-foreground" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+                  No browser wallet detected. Install one below, or pair a mobile wallet with
+                  WalletConnect.
+                </p>
+              )}
+            </section>
+
+            <section className="mt-6">
+              <p className="eyebrow">WalletConnect</p>
+
+              {walletConnectProjectId && wcConnector ? (
+                <button
+                  type="button"
+                  onClick={handleWalletConnect}
+                  disabled={isPending}
+                  className="mt-3 flex w-full items-center gap-3 rounded-xl border border-border bg-background/50 p-3 text-left transition-colors hover:border-primary/40 disabled:opacity-60"
+                >
+                  <span className="grid size-9 place-items-center rounded-lg bg-[#3b99fc]/15 text-[#6cb4ff]">
+                    <QrCode className="size-4" />
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium">WalletConnect</span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      Scan a QR code with any mobile wallet
+                    </span>
+                  </span>
+                  {activeId === 'walletConnect' && isPending ? (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <ArrowRight className="size-4 text-muted-foreground" />
+                  )}
+                </button>
+              ) : (
+                <div className="mt-3 flex items-start gap-3 rounded-xl border border-border/70 bg-background/30 p-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary/60 text-muted-foreground">
+                    <QrCode className="size-4" />
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium">WalletConnect</span>
+                    <span className="block text-[11px] leading-relaxed text-muted-foreground">
+                      Add a WalletConnect project ID to enable QR pairing. Use the{' '}
+                      <a
+                        href="https://cloud.reown.com"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary underline-offset-2 hover:underline"
+                      >
+                        Reown dashboard
+                      </a>{' '}
+                      and set <code className="text-foreground">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code>.
+                    </span>
+                  </span>
+                </div>
+              )}
+            </section>
+
+            <section className="mt-6">
+              <p className="eyebrow">More wallets</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {POPULAR_WALLETS.map((wallet) => (
+                  <a
+                    key={wallet.name}
+                    href={wallet.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/40"
+                  >
+                    <span
+                      className="grid size-8 shrink-0 place-items-center rounded-lg text-xs font-bold text-white"
+                      style={{ backgroundColor: wallet.color }}
+                    >
+                      {wallet.initial}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{wallet.name}</span>
+                    <ExternalLink className="size-3 shrink-0 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+            </section>
+
+            {error && (
+              <p className="mt-5 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                {error.message.split('\n')[0]}
+              </p>
+            )}
+
+            <p className="mt-5 text-[11px] leading-relaxed text-muted-foreground">
+              RobinFi runs on {robinhoodChain.name}. Testnet software — no real funds.
             </p>
-          )}
-
-          <p className="mt-5 text-[11px] leading-relaxed text-muted-foreground">
-            RobinFi runs on {robinhoodChain.name}. Testnet software — no real funds.
-          </p>
-        </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function WalletAvatar({ name, icon }: { name: string; icon?: string }) {
+  if (icon) {
+    return (
+      // Wallet icons come from the extension's EIP-6963 announcement.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={icon} alt="" className="size-9 shrink-0 rounded-lg" />
+    )
+  }
+
+  return (
+    <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-secondary/60">
+      <Wallet className="size-4 text-primary" />
+      <span className="sr-only">{name}</span>
+    </span>
   )
 }
 

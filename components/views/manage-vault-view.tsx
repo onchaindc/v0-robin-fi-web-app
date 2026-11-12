@@ -174,8 +174,8 @@ export function ManageVaultView({ vaultAddress }: ManageVaultViewProps) {
       <div className="panel mx-auto max-w-xl p-10 text-center">
         <p className="font-serif text-2xl">This vault could not be loaded</p>
         <p className="mt-3 text-sm text-muted-foreground">
-          The address may not be a RobinFi vault on {robinhoodChain.name}, or the RPC is
-          unreachable. You can inspect it on the explorer.
+          This address does not look like a RobinFi vault on {robinhoodChain.name}. You can
+          still inspect it on the explorer.
         </p>
         <a
           href={`${EXPLORER_URL}/address/${vaultAddress}`}

@@ -283,16 +283,8 @@ export function ConnectSheet({
                   <span className="flex-1">
                     <span className="block text-sm font-medium">WalletConnect</span>
                     <span className="block text-[11px] leading-relaxed text-muted-foreground">
-                      Add a WalletConnect project ID to enable QR pairing. Use the{' '}
-                      <a
-                        href="https://cloud.reown.com"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary underline-offset-2 hover:underline"
-                      >
-                        Reown dashboard
-                      </a>{' '}
-                      and set <code className="text-foreground">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code>.
+                      Mobile QR pairing is not enabled in this build yet. Use a browser wallet
+                      for now.
                     </span>
                   </span>
                 </div>
@@ -407,15 +399,15 @@ export function WalletChip({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 text-sm transition-colors hover:border-primary/40"
+          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-1.5 py-1.5 text-sm transition-colors hover:border-primary/40 sm:gap-2 sm:px-2"
         >
-          <span className="numeric pl-2 text-muted-foreground">
+          <span className="numeric hidden pl-1.5 text-muted-foreground sm:inline">
             {balance ? `${formatEth(Number(balance.value) / 1e18, 3)} ETH` : '—'}
           </span>
-          <span className="numeric rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">
+          <span className="numeric rounded-full bg-secondary px-2 py-1 text-[11px] font-medium sm:px-2.5 sm:text-xs">
             {shortAddress(address)}
           </span>
-          <ChevronDown className="mr-1 size-3.5 text-muted-foreground" />
+          <ChevronDown className="mr-0.5 size-3.5 text-muted-foreground sm:mr-1" />
         </button>
       </div>
 

@@ -424,12 +424,15 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
           </p>
         )}
 
-        {!isFactoryConfigured && (
-          <p className="flex items-start gap-2 rounded-lg border border-accent/25 bg-accent/[0.06] p-3 text-xs text-muted-foreground">
+        {step === 2 && !isFactoryConfigured && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-accent/25 bg-accent/[0.06] p-3.5">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-accent" />
-            The factory address is not configured, so a vault cannot be deployed from this build
-            yet. Deploy the contracts, then set NEXT_PUBLIC_FACTORY_ADDRESS.
-          </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              <span className="font-medium text-foreground">Deployment opens soon.</span> Vault
+              creation is not live on {robinhoodChain.name} yet. You can walk through the full
+              setup now — your strategy will be ready to deploy at launch.
+            </p>
+          </div>
         )}
 
         <div className="flex items-center justify-between gap-3 border-t border-border/70 pt-6">
@@ -454,7 +457,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
           ) : (
             <Button
               type="submit"
-              disabled={!canContinue || isSubmitting || !isFactoryConfigured}
+              disabled={!canContinue || isSubmitting || (step === 2 && !isFactoryConfigured)}
               className="rounded-full px-6"
             >
               {isSubmitting ? (
@@ -463,7 +466,11 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
                   {isPending ? 'Confirm in wallet' : 'Deploying'}
                 </>
               ) : step === 2 ? (
-                'Deploy vault'
+                isFactoryConfigured ? (
+                  'Deploy vault'
+                ) : (
+                  'Launching soon'
+                )
               ) : (
                 <>
                   Continue <ArrowRight className="ml-1.5 size-4" />

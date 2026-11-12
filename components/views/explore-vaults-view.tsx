@@ -83,15 +83,16 @@ export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
       </div>
 
       {usingPreview && !isLoading && (
-        <div className="mt-6 flex items-start gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] p-4 text-sm">
+        <div className="mt-6 flex items-start gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-accent" />
-          <p className="text-muted-foreground">
+          <div className="text-sm leading-relaxed text-muted-foreground">
+            <span className="font-medium text-foreground">Preview mode.</span>{' '}
             {isError
-              ? 'The factory could not be reached on this network. Check the RPC and factory address — the baskets below are samples.'
+              ? "We can't reach the vault registry on this network right now, so these baskets are samples."
               : isFactoryConfigured
-                ? 'No vaults have been created yet — these are sample baskets. Create the first one to see it here.'
-                : 'The factory is not deployed on this network yet, so these are sample baskets. Deploy the contracts and set NEXT_PUBLIC_FACTORY_ADDRESS to go live.'}
-          </p>
+                ? 'No vaults have been published yet. These sample baskets show what a vault looks like.'
+                : 'The live marketplace is not open on this network yet. These baskets are samples of what you can launch.'}
+          </div>
         </div>
       )}
 

@@ -50,18 +50,18 @@ function Hero() {
         <div className="animate-fade-up">
           <p className="eyebrow flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-primary" />
-            Tokenized equity · Robinhood Chain
+            Tokenized equity infrastructure
           </p>
 
           <h1 className="display mt-6 text-5xl sm:text-6xl lg:text-[4.75rem]">
-            Own the index.
+            Diversified exposure.
             <br />
-            Not the <em className="font-normal italic text-accent">paperwork</em>.
+            <em className="font-normal italic text-accent">One</em> transaction.
           </h1>
 
           <p className="mt-7 max-w-lg text-lg leading-relaxed text-muted-foreground">
-            Package tokenized stocks into a shareable index vault. One deposit, instant
-            diversification, and ERC-4626 shares you can take anywhere in DeFi.
+            RobinFi packages tokenized equities into ERC-4626 index vaults. Define a basket, set
+            the weights, and let anyone take a position in a single deposit.
           </p>
 
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -79,7 +79,7 @@ function Hero() {
             {[
               { value: '5', label: 'Tokenized names' },
               { value: '1', label: 'Transaction to diversify' },
-              { value: '0', label: 'Custodians' },
+              { value: '0', label: 'Intermediaries' },
             ].map((stat) => (
               <div key={stat.label}>
                 <dt className="numeric font-serif text-3xl">{stat.value}</dt>
@@ -117,8 +117,8 @@ function VaultTicket() {
               {vault.tokens.length} names · weighted
             </p>
           </div>
-          <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-primary">
-            Live
+          <span className="rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Preview
           </span>
         </div>
 
@@ -198,23 +198,23 @@ function Statement() {
         <p className="eyebrow">Why an index</p>
         <div>
           <p className="display text-3xl leading-[1.15] sm:text-4xl">
-            Buying five stocks is a chore. Owning an <em className="italic text-accent">index</em>{' '}
-            is a decision.
+            Five orders, or one <em className="italic text-accent">position</em>. That is the
+            difference.
           </p>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
-            A vault bundles a basket of tokenized equities into one asset. You deposit once,
-            hold transferable shares, and the weights stay honest. No broker, no minimum, no
-            set of five separate orders every time conviction changes.
+            A vault bundles tokenized equities into a single asset. Deposit once, hold
+            transferable shares, and keep the weights you chose — no broker, no minimums, and no
+            separate ticket every time your conviction changes.
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
             {[
               {
-                title: 'Non-custodial by design',
-                body: 'Shares live in your wallet. The vault holds assets; it never holds your keys.',
+                title: 'Self-custody by default',
+                body: 'Shares live in your wallet. The vault holds assets and never your keys.',
               },
               {
-                title: 'Open issuance',
-                body: 'Anyone can launch a vault and seed it. The marketplace decides what matters.',
+                title: 'Permissionless issuance',
+                body: 'Anyone can launch and seed a vault. The market decides what is worth owning.',
               },
             ].map((item) => (
               <div key={item.title} className="panel-soft p-5">
@@ -233,18 +233,18 @@ function HowItWorks() {
   const steps = [
     {
       index: '01',
-      title: 'Pick the names',
-      body: 'Choose up to five tokenized stocks and set equal-weight or custom allocations in basis points.',
+      title: 'Define the basket',
+      body: 'Select up to five tokenized equities and set equal-weight or custom allocations.',
     },
     {
       index: '02',
       title: 'Deploy the vault',
-      body: 'The factory deploys an ERC-4626 vault that mints transferable shares against ETH deposits.',
+      body: 'A factory contract issues an ERC-4626 vault with transferable shares against ETH deposits.',
     },
     {
       index: '03',
-      title: 'Deposit or launch',
-      body: 'Seed it yourself, or open it to the marketplace and let anyone deposit into your strategy.',
+      title: 'Open it to capital',
+      body: 'Seed it yourself, or publish it and let anyone deposit into your strategy.',
     },
   ]
 
@@ -254,11 +254,11 @@ function HowItWorks() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="eyebrow">How it works</p>
-            <h2 className="display mt-4 text-4xl sm:text-5xl">Three moves, one vault.</h2>
+            <h2 className="display mt-4 text-4xl sm:text-5xl">From thesis to vault in three steps.</h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Built on ERC-4626-style vault accounting, so shares are legible to wallets and
-            composable with the rest of DeFi.
+            Standard ERC-4626-style accounting keeps shares legible to every wallet, aggregator
+            and lending market.
           </p>
         </div>
 
@@ -280,31 +280,31 @@ function Features() {
   const features = [
     {
       icon: Layers,
-      title: 'Composable shares',
-      body: 'Vault shares are ERC-20s. Use them as collateral, route them through aggregators, or build a vault of vaults.',
+      title: 'Composable by design',
+      body: 'Shares are ERC-20s. Post them as collateral, route them through aggregators, or build a vault of vaults.',
     },
     {
       icon: Coins,
-      title: 'One deposit',
-      body: 'Exposure to the whole basket in a single transaction. No five-step checkout, no dust.',
+      title: 'Single-transaction exposure',
+      body: 'Take a position in the whole basket at once. No five-step checkout, no idle balances.',
     },
     {
       icon: ShieldCheck,
-      title: 'Transparent weights',
-      body: 'Allocations are stored on-chain in basis points and verified on every rebalance.',
+      title: 'Weights on-chain',
+      body: 'Every allocation is stored in basis points and enforced on each rebalance.',
     },
     {
       icon: Globe2,
-      title: 'Borderless access',
-      body: 'Anyone with a wallet can create or buy. Markets stop at the edge of the network, not at a border.',
+      title: 'Open access',
+      body: 'Create or invest from any wallet. Distribution is limited by the network, not by geography.',
     },
   ]
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-24">
-      <p className="eyebrow">The infrastructure</p>
+      <p className="eyebrow">Infrastructure</p>
       <h2 className="display mt-4 max-w-2xl text-4xl sm:text-5xl">
-        An index fund that behaves like a primitive.
+        Market exposure that behaves like a building block.
       </h2>
 
       <div className="mt-14 grid gap-6 sm:grid-cols-2">
@@ -338,17 +338,17 @@ function Closing() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(191,242,211,0.1),transparent_60%)]"
       />
       <div className="relative mx-auto max-w-4xl px-4 py-28 text-center">
-        <p className="eyebrow">For a world without market borders</p>
+        <p className="eyebrow">Built for open markets</p>
         <h2 className="display mx-auto mt-6 max-w-2xl text-4xl sm:text-6xl">
-          Build the basket. Let everyone else own it.
+          Package the thesis. Publish the vault.
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
-          RobinFi is a permissionless index factory. The strategy is yours; the access is
-          public.
+          RobinFi is permissionless index infrastructure. Your strategy, your weights — open to
+          anyone with a wallet.
         </p>
 
         <div className="mt-10 flex justify-center">
-          <WalletButton label="Launch a vault" className="px-7 py-3.5" />
+          <WalletButton label="Start building" className="px-7 py-3.5" />
         </div>
       </div>
     </section>
@@ -363,7 +363,7 @@ function Footer() {
         <span
           className={`size-1.5 rounded-full ${isFactoryConfigured ? 'bg-primary' : 'bg-accent'}`}
         />
-        {isFactoryConfigured ? 'Factory configured' : 'Contracts awaiting testnet deployment'}
+        {isFactoryConfigured ? 'Live on testnet' : 'Preview build · live vaults coming soon'}
       </p>
     </footer>
   )

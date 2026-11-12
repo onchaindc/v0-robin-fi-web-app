@@ -13,10 +13,10 @@ export function Header({ showNav = false }: { showNav?: boolean }) {
   const { isConnected } = useAccount()
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4">
+    <header className="relative z-40 border-b border-border bg-background md:sticky md:top-0">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-4">
         <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
-          <Wordmark />
+          <Wordmark className="text-lg sm:text-xl" />
         </Link>
 
         {showNav && (
@@ -38,17 +38,21 @@ export function Header({ showNav = false }: { showNav?: boolean }) {
           </nav>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={toggleTheme}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            className="grid size-8 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground sm:size-9"
           >
             {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
 
-          {isConnected ? <WalletChip /> : <WalletButton label="Connect" className="px-4 py-2" />}
+          {isConnected ? (
+            <WalletChip />
+          ) : (
+            <WalletButton label="Connect" className="px-3.5 py-2 text-[13px] sm:px-4" />
+          )}
         </div>
       </div>
     </header>

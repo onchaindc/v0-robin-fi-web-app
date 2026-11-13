@@ -14,6 +14,7 @@ import { FACTORY_ABI } from '@/lib/contracts'
 import { FACTORY_BYTECODE } from '@/lib/factory-bytecode'
 import { saveFactoryAddress, useFactoryAddress } from '@/hooks/use-factory'
 import { EXPLORER_URL, robinhoodChain } from '@/lib/chain'
+import { ensureRobinhoodChain } from '@/lib/ensure-chain'
 import { cn } from '@/lib/utils'
 
 export function FactoryBootstrap({ className }: { className?: string }) {
@@ -36,6 +37,15 @@ export function FactoryBootstrap({ className }: { className?: string }) {
 
   const wrongChain = isConnected && chainId !== robinhoodChain.id
   const busy = isPending || isConfirming
+
+  const switchToRobinhood = async () => {
+    try {
+      const handled = await ensureRobinhoodChain()
+      if (!handled) switchChain({ chainId: robinhoodChain.id })
+    } catch {
+      switchChain({ chainId: robinhoodChain.id })
+    }
+  }
 
   const deploy = () => {
     deployContract({ abi: FACTORY_ABI, bytecode: FACTORY_BYTECODE, args: [] })
@@ -105,7 +115,7 @@ export function FactoryBootstrap({ className }: { className?: string }) {
         {wrongChain ? (
           <Button
             type="button"
-            onClick={() => switchChain({ chainId: robinhoodChain.id })}
+            onClick={switchToRobinhood}
             className="rounded-full"
           >
             Switch network

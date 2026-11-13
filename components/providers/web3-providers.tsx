@@ -32,36 +32,43 @@ const projectId =
   process.env.NEXT_PUBLIC_WC_PROJECT_ID ||
   ''
 
-const connectors = connectorsForWallets(
-  [
-    {
-      groupName: 'Popular',
-      wallets: [
-        metaMaskWallet,
-        rabbyWallet,
-        rainbowWallet,
-        zerionWallet,
-        coinbaseWallet,
-        trustWallet,
+/**
+ * Most RainbowKit wallets connect over WalletConnect. Registering them with a
+ * placeholder project ID makes every attempt fail with a generic RPC error, so
+ * only expose injected wallets until a real project ID is configured.
+ */
+const connectors = projectId
+  ? connectorsForWallets(
+      [
+        {
+          groupName: 'Popular',
+          wallets: [
+            metaMaskWallet,
+            rabbyWallet,
+            rainbowWallet,
+            zerionWallet,
+            coinbaseWallet,
+            trustWallet,
+          ],
+        },
+        {
+          groupName: 'More',
+          wallets: [
+            injectedWallet,
+            okxWallet,
+            braveWallet,
+            phantomWallet,
+            ledgerWallet,
+            walletConnectWallet,
+          ],
+        },
       ],
-    },
-    {
-      groupName: 'More',
-      wallets: [
-        injectedWallet,
-        okxWallet,
-        braveWallet,
-        phantomWallet,
-        ledgerWallet,
-        walletConnectWallet,
-      ],
-    },
-  ],
-  {
-    appName: 'RobinFi',
-    projectId: projectId || '00000000000000000000000000000000',
-  },
-)
+      { appName: 'RobinFi', projectId },
+    )
+  : connectorsForWallets([{ groupName: 'Installed', wallets: [injectedWallet] }], {
+      appName: 'RobinFi',
+      projectId,
+    })
 
 const config = createConfig({
   connectors,

@@ -6,7 +6,14 @@ import type { EthereumProvider as WalletConnectProviderClass } from '@walletconn
 
 type WCProvider = Awaited<ReturnType<typeof WalletConnectProviderClass.init>>
 
-export const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+/**
+ * Supports both env names so this project and Flat Signal can share the same
+ * WalletConnect Cloud project ID on Vercel.
+ */
+export const walletConnectProjectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_WC_PROJECT_ID ||
+  ''
 
 let uriHandler: ((uri?: string) => void) | undefined
 
@@ -28,14 +35,20 @@ export const walletConnectConnector = createConnector((config) => {
   let chainId: number = robinhoodChain.id
 
   async function getWalletConnectProvider(): Promise<WCProvider> {
+    if (!walletConnectProjectId) {
+      throw new Error(
+        'WalletConnect is not configured. Set NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID (or NEXT_PUBLIC_WC_PROJECT_ID) and allowlist your domain at dashboard.reown.com.',
+      )
+    }
+
     if (!providerPromise) {
       providerPromise = (async () => {
         const { EthereumProvider } = await import('@walletconnect/ethereum-provider')
 
         const provider = await EthereumProvider.init({
-          projectId: walletConnectProjectId ?? '',
+          projectId: walletConnectProjectId,
           chains: [robinhoodChain.id],
-          optionalChains: [],
+          optionalChains: [robinhoodChain.id],
           showQrModal: false,
           rpcMap: {
             [robinhoodChain.id]: robinhoodChain.rpcUrls.default.http[0],

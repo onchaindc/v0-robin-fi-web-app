@@ -7,7 +7,7 @@ import { VaultCard } from '@/components/vault-card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAllVaultAddresses, useVaultSummaries } from '@/hooks/use-vaults'
-import { isFactoryConfigured } from '@/lib/contracts'
+import { useFactoryAddress } from '@/hooks/use-factory'
 import { PREVIEW_VAULTS, toVaultView } from '@/lib/vaults'
 
 interface ExploreVaultsViewProps {
@@ -16,6 +16,7 @@ interface ExploreVaultsViewProps {
 
 export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
   const { address } = useAccount()
+  const factory = useFactoryAddress()
   const { addresses, isLoading, isError } = useAllVaultAddresses()
   const { vaults } = useVaultSummaries(addresses, address)
 
@@ -89,9 +90,9 @@ export function ExploreVaultsView({ onSelectVault }: ExploreVaultsViewProps) {
             <span className="font-medium text-foreground">Preview mode.</span>{' '}
             {isError
               ? "We can't reach the vault registry on this network right now, so these baskets are samples."
-              : isFactoryConfigured
+              : factory
                 ? 'No vaults have been published yet. These sample baskets show what a vault looks like.'
-                : 'The live marketplace is not open on this network yet. These baskets are samples of what you can launch.'}
+                : 'Activate RobinFi above to open the live marketplace. Until then, these baskets are samples.'}
           </div>
         </div>
       )}

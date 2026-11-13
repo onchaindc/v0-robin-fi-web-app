@@ -7,7 +7,8 @@ import { ArrowLeft, ArrowRight, Check, Info, Loader2, TriangleAlert } from 'luci
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FACTORY_ABI, FACTORY_ADDRESS, STOCK_TOKENS, isFactoryConfigured } from '@/lib/contracts'
+import { FACTORY_ABI, STOCK_TOKENS } from '@/lib/contracts'
+import { useFactoryAddress } from '@/hooks/use-factory'
 import { robinhoodChain } from '@/lib/chain'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +24,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
   const { isConnected } = useAccount()
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
+  const factory = useFactoryAddress()
   const [step, setStep] = useState(0)
 
   const [name, setName] = useState('')
@@ -120,7 +122,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
   }
 
   const submit = () => {
-    if (!isFactoryConfigured) return
+    if (!factory) return
 
     let deposit = 0n
     try {
@@ -135,7 +137,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
       .filter((token): token is (typeof STOCK_TOKENS)[number] => Boolean(token))
 
     writeContract({
-      address: FACTORY_ADDRESS,
+      address: factory,
       abi: FACTORY_ABI,
       functionName: 'createVault',
       args: [
@@ -424,13 +426,13 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
           </p>
         )}
 
-        {step === 2 && !isFactoryConfigured && (
+        {step === 2 && !factory && (
           <div className="flex items-start gap-2.5 rounded-lg border border-accent/25 bg-accent/[0.06] p-3.5">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-accent" />
             <p className="text-xs leading-relaxed text-muted-foreground">
-              <span className="font-medium text-foreground">Deployment opens soon.</span> Vault
-              creation is not live on {robinhoodChain.name} yet. You can walk through the full
-              setup now — your strategy will be ready to deploy at launch.
+              <span className="font-medium text-foreground">Activate RobinFi first.</span> Use
+              the deploy button at the top of the page to publish the vault factory, then come
+              back to launch this strategy.
             </p>
           </div>
         )}
@@ -457,7 +459,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
           ) : (
             <Button
               type="submit"
-              disabled={!canContinue || isSubmitting || (step === 2 && !isFactoryConfigured)}
+              disabled={!canContinue || isSubmitting || (step === 2 && !factory)}
               className="rounded-full px-6"
             >
               {isSubmitting ? (
@@ -466,11 +468,7 @@ export function CreateVaultView({ onCreated }: CreateVaultViewProps) {
                   {isPending ? 'Confirm in wallet' : 'Deploying'}
                 </>
               ) : step === 2 ? (
-                isFactoryConfigured ? (
-                  'Deploy vault'
-                ) : (
-                  'Launching soon'
-                )
+                factory ? 'Deploy vault' : 'Not active yet'
               ) : (
                 <>
                   Continue <ArrowRight className="ml-1.5 size-4" />

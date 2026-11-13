@@ -9,7 +9,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { WalletButton } from '@/components/connect-wallet'
-import { isFactoryConfigured } from '@/lib/contracts'
+import { useFactoryAddress } from '@/hooks/use-factory'
 import { PREVIEW_VAULTS } from '@/lib/vaults'
 
 const TICKER = [
@@ -356,14 +356,16 @@ function Closing() {
 }
 
 function Footer() {
+  const factory = useFactoryAddress()
+
   return (
     <footer className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <p>© {new Date().getFullYear()} RobinFi · Testnet software, not investment advice.</p>
       <p className="flex items-center gap-2">
         <span
-          className={`size-1.5 rounded-full ${isFactoryConfigured ? 'bg-primary' : 'bg-accent'}`}
+          className={`size-1.5 rounded-full ${factory ? 'bg-primary' : 'bg-accent'}`}
         />
-        {isFactoryConfigured ? 'Live on testnet' : 'Preview build · live vaults coming soon'}
+        {factory ? 'Live on testnet' : 'Preview build · live vaults coming soon'}
       </p>
     </footer>
   )

@@ -5,6 +5,8 @@ import { useAccount } from 'wagmi'
 import { Header } from './header'
 import { TabNavigation } from './tab-navigation'
 import { Landing } from './landing'
+import { FactoryBootstrap } from './factory-bootstrap'
+import { useFactoryAddress } from '@/hooks/use-factory'
 import { MyVaultsView } from './views/my-vaults-view'
 import { CreateVaultView } from './views/create-vault-view'
 import { ExploreVaultsView } from './views/explore-vaults-view'
@@ -12,6 +14,7 @@ import { ManageVaultView } from './views/manage-vault-view'
 
 export function RobinFiApp() {
   const { isConnected } = useAccount()
+  const factory = useFactoryAddress()
   const [activeTab, setActiveTab] = useState('my-vaults')
   const [selectedVault, setSelectedVault] = useState<string | null>(null)
 
@@ -38,6 +41,11 @@ export function RobinFiApp() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pb-24">
+        {!factory && (
+          <div className="mx-auto max-w-6xl px-3 pt-3 sm:px-4 sm:pt-4">
+            <FactoryBootstrap />
+          </div>
+        )}
         <TabNavigation
           activeTab={activeTab}
           onTabChange={setActiveTab}

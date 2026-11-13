@@ -2,13 +2,8 @@
 
 import { useMemo } from 'react'
 import { useReadContract, useReadContracts } from 'wagmi'
-import {
-  BPS_DENOMINATOR,
-  FACTORY_ABI,
-  FACTORY_ADDRESS,
-  VAULT_ABI,
-  isFactoryConfigured,
-} from '@/lib/contracts'
+import { BPS_DENOMINATOR, FACTORY_ABI, VAULT_ABI } from '@/lib/contracts'
+import { useFactoryAddress } from './use-factory'
 
 export type VaultSummary = {
   address: `0x${string}`
@@ -24,11 +19,12 @@ export type VaultSummary = {
 }
 
 export function useAllVaultAddresses() {
+  const factory = useFactoryAddress()
   const query = useReadContract({
-    address: FACTORY_ADDRESS,
+    address: factory ?? undefined,
     abi: FACTORY_ABI,
     functionName: 'getAllVaults',
-    query: { enabled: isFactoryConfigured, staleTime: 0 },
+    query: { enabled: Boolean(factory), staleTime: 0 },
   })
 
   return {
@@ -40,12 +36,13 @@ export function useAllVaultAddresses() {
 }
 
 export function useCreatorVaultAddresses(creator?: `0x${string}`) {
+  const factory = useFactoryAddress()
   const query = useReadContract({
-    address: FACTORY_ADDRESS,
+    address: factory ?? undefined,
     abi: FACTORY_ABI,
     functionName: 'getVaultsByCreator',
     args: creator ? [creator] : undefined,
-    query: { enabled: isFactoryConfigured && Boolean(creator), staleTime: 0 },
+    query: { enabled: Boolean(factory && creator), staleTime: 0 },
   })
 
   return {

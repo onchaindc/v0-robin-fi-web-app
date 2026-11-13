@@ -3,14 +3,12 @@
 import Link from 'next/link'
 import { useTheme } from '@/components/providers/theme-provider'
 import { Wordmark } from '@/components/logo'
-import { WalletButton, WalletChip } from '@/components/connect-wallet'
-import { useAccount } from 'wagmi'
+import { WalletButton } from '@/components/connect-wallet'
 import { EXPLORER_URL } from '@/lib/chain'
 import { Moon, Sun } from 'lucide-react'
 
 export function Header({ showNav = false }: { showNav?: boolean }) {
   const { theme, toggleTheme } = useTheme()
-  const { isConnected } = useAccount()
 
   return (
     <header className="relative z-40 border-b border-border bg-background md:sticky md:top-0">
@@ -48,11 +46,7 @@ export function Header({ showNav = false }: { showNav?: boolean }) {
             {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
 
-          {isConnected ? (
-            <WalletChip />
-          ) : (
-            <WalletButton label="Connect" className="px-3.5 py-2 text-[13px] sm:px-4" />
-          )}
+          <WalletButton label="Connect" className="px-3.5 py-2 text-[13px] sm:px-4" />
         </div>
       </div>
     </header>

@@ -3,18 +3,69 @@
 import React, { useState } from 'react'
 import { WagmiProvider, createConfig, http } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ThemeProvider } from './theme-provider'
+import {
+  RainbowKitProvider,
+  connectorsForWallets,
+  darkTheme,
+  lightTheme,
+} from '@rainbow-me/rainbowkit'
+import {
+  metaMaskWallet,
+  rainbowWallet,
+  coinbaseWallet,
+  walletConnectWallet,
+  rabbyWallet,
+  zerionWallet,
+  trustWallet,
+  injectedWallet,
+  braveWallet,
+  okxWallet,
+  phantomWallet,
+  ledgerWallet,
+} from '@rainbow-me/rainbowkit/wallets'
+import '@rainbow-me/rainbowkit/styles.css'
+import { ThemeProvider, useTheme } from './theme-provider'
 import { robinhoodChain } from '@/lib/chain'
-import { injectedConnector } from '@/lib/wallet'
-import { walletConnectConnector, walletConnectProjectId } from '@/lib/wallet-connect'
 
-const connectors = walletConnectProjectId
-  ? [injectedConnector, walletConnectConnector]
-  : [injectedConnector]
+const projectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_WC_PROJECT_ID ||
+  ''
+
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Popular',
+      wallets: [
+        metaMaskWallet,
+        rabbyWallet,
+        rainbowWallet,
+        zerionWallet,
+        coinbaseWallet,
+        trustWallet,
+      ],
+    },
+    {
+      groupName: 'More',
+      wallets: [
+        injectedWallet,
+        okxWallet,
+        braveWallet,
+        phantomWallet,
+        ledgerWallet,
+        walletConnectWallet,
+      ],
+    },
+  ],
+  {
+    appName: 'RobinFi',
+    projectId: projectId || '00000000000000000000000000000000',
+  },
+)
 
 const config = createConfig({
-  chains: [robinhoodChain],
   connectors,
+  chains: [robinhoodChain],
   transports: {
     [robinhoodChain.id]: http(
       process.env.NEXT_PUBLIC_ROBINHOOD_RPC_URL ??
@@ -23,6 +74,25 @@ const config = createConfig({
   },
   ssr: true,
 })
+
+function RainbowKitWithTheme({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme()
+
+  const rkTheme =
+    theme === 'light'
+      ? lightTheme({
+          accentColor: '#22c55e',
+          accentColorForeground: '#000',
+          borderRadius: 'medium',
+        })
+      : darkTheme({
+          accentColor: '#22c55e',
+          accentColorForeground: '#000',
+          borderRadius: 'medium',
+        })
+
+  return <RainbowKitProvider theme={rkTheme}>{children}</RainbowKitProvider>
+}
 
 export function Web3Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -37,7 +107,9 @@ export function Web3Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <WagmiProvider config={config}>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitWithTheme>{children}</RainbowKitWithTheme>
+        </QueryClientProvider>
       </WagmiProvider>
     </ThemeProvider>
   )

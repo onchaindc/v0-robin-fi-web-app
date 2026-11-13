@@ -33,17 +33,49 @@ import { useDetectedWallets, type DetectedWallet } from '@/hooks/use-detected-wa
 import { formatEth, shortAddress } from '@/lib/vaults'
 import { cn } from '@/lib/utils'
 
-const POPULAR_WALLETS = [
-  { name: 'MetaMask', initial: 'M', color: '#f6851b', href: 'https://metamask.io/download/' },
+const MOBILE_WALLETS = [
   {
+    id: 'metamask',
+    name: 'MetaMask',
+    initial: 'M',
+    color: '#f6851b',
+    download: 'https://metamask.io/download/',
+    deepLink: (uri: string) =>
+      `https://metamask.app.link/wc?uri=${encodeURIComponent(uri)}`,
+  },
+  {
+    id: 'coinbase',
     name: 'Coinbase Wallet',
     initial: 'C',
     color: '#0052ff',
-    href: 'https://www.coinbase.com/wallet/downloads',
+    download: 'https://www.coinbase.com/wallet/downloads',
+    deepLink: (uri: string) =>
+      `https://go.cb-w.com/wc?uri=${encodeURIComponent(uri)}`,
   },
-  { name: 'Rabby', initial: 'R', color: '#8697ff', href: 'https://rabby.io/' },
-  { name: 'Trust Wallet', initial: 'T', color: '#3375bb', href: 'https://trustwallet.com/download' },
+  {
+    id: 'trust',
+    name: 'Trust Wallet',
+    initial: 'T',
+    color: '#3375bb',
+    download: 'https://trustwallet.com/download',
+    deepLink: (uri: string) =>
+      `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`,
+  },
+  {
+    id: 'rabby',
+    name: 'Rabby',
+    initial: 'R',
+    color: '#8697ff',
+    download: 'https://rabby.io/',
+    // Rabby mobile uses standard WC / universal link fallback
+    deepLink: (uri: string) => uri,
+  },
 ] as const
+
+function isMobileDevice() {
+  if (typeof navigator === 'undefined') return false
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+}
 
 export function WalletButton({
   className,
@@ -80,10 +112,6 @@ export function WalletButton({
   )
 }
 
-/**
- * Plain portal sheet. Radix portals can silently fail to mount inside some
- * mobile in-app browsers, which made Connect appear to do nothing.
- */
 function Sheet({
   open,
   onClose,
@@ -160,13 +188,17 @@ export function ConnectSheet({
   const detected = useDetectedWallets()
   const connectors = useConnectors()
   const { connectAsync, isPending, error, reset } = useConnect()
+  const mobile = isMobileDevice()
 
   const [pairingUri, setPairingUri] = useState<string>()
   const [activeId, setActiveId] = useState<string>()
   const [copied, setCopied] = useState(false)
+  const [pendingDeepLink, setPendingDeepLink] = useState<
+    ((uri: string) => string) | null
+  >(null)
 
-  const injectedConnector = connectors.find((connector) => connector.id === 'injected')
-  const wcConnector = connectors.find((connector) => connector.id === 'walletConnect')
+  const injectedConnector = connectors.find((c) => c.id === 'injected')
+  const wcConnector = connectors.find((c) => c.id === 'walletConnect')
 
   const close = () => onOpenChange(false)
 
@@ -174,6 +206,7 @@ export function ConnectSheet({
     if (open) return
     setPairingUri(undefined)
     setActiveId(undefined)
+    setPendingDeepLink(null)
     setWalletConnectUriHandler(undefined)
     reset()
   }, [open, reset])
@@ -195,22 +228,36 @@ export function ConnectSheet({
     }
   }
 
-  const handleWalletConnect = async () => {
+  const startWalletConnect = async (deepLinkFn?: (uri: string) => string) => {
     if (!wcConnector) return
-    setActiveId('walletConnect')
-    setWalletConnectUriHandler((uri) => setPairingUri(uri))
+    setActiveId(deepLinkFn ? 'mobile-wallet' : 'walletConnect')
+    setPendingDeepLink(() => deepLinkFn ?? null)
     setPairingUri('pending')
+
+    setWalletConnectUriHandler((uri) => {
+      if (!uri) return
+      setPairingUri(uri)
+      // On mobile, auto-open the chosen wallet app with the WC URI
+      if (deepLinkFn && typeof window !== 'undefined') {
+        const link = deepLinkFn(uri)
+        // Slight delay so QR state is set before leaving the page
+        setTimeout(() => {
+          window.location.href = link
+        }, 150)
+      }
+    })
 
     try {
       await connectAsync({ connector: wcConnector, chainId: robinhoodChain.id })
       close()
     } catch {
       setPairingUri(undefined)
+      setPendingDeepLink(null)
     }
   }
 
   const copyUri = async () => {
-    if (!pairingUri) return
+    if (!pairingUri || pairingUri === 'pending') return
     try {
       await navigator.clipboard.writeText(pairingUri)
       setCopied(true)
@@ -229,6 +276,7 @@ export function ConnectSheet({
             onClick={() => {
               setPairingUri(undefined)
               setActiveId(undefined)
+              setPendingDeepLink(null)
               reset()
             }}
             className="mb-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -237,10 +285,12 @@ export function ConnectSheet({
           </button>
 
           <h2 id="connect-wallet-title" className="pr-8 font-serif text-2xl font-medium">
-            Scan with WalletConnect
+            {mobile && pendingDeepLink ? 'Opening wallet…' : 'Scan with WalletConnect'}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Open your mobile wallet and scan this code to pair.
+            {mobile && pendingDeepLink
+              ? 'If the app did not open, scan the code or tap Open in wallet.'
+              : 'Open your mobile wallet and scan this code to pair.'}
           </p>
 
           <div className="mt-6 flex flex-col items-center">
@@ -254,7 +304,7 @@ export function ConnectSheet({
               </div>
             )}
 
-            <div className="mt-5 flex items-center gap-4 text-xs">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs">
               <button
                 type="button"
                 onClick={copyUri}
@@ -264,17 +314,21 @@ export function ConnectSheet({
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
                 {copied ? 'Copied' : 'Copy pairing link'}
               </button>
-              <a
-                href={pairingUri}
-                className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary"
-              >
-                Open in wallet <ExternalLink className="size-3" />
-              </a>
+              {pairingUri !== 'pending' && (
+                <a
+                  href={
+                    pendingDeepLink ? pendingDeepLink(pairingUri) : pairingUri
+                  }
+                  className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  Open in wallet <ExternalLink className="size-3" />
+                </a>
+              )}
             </div>
 
             <p className="mt-6 flex items-center gap-2 text-[11px] text-muted-foreground">
               {isPending && <Loader2 className="size-3 animate-spin" />}
-              Waiting for approval on your phone…
+              Waiting for approval in your wallet…
             </p>
           </div>
         </div>
@@ -287,6 +341,7 @@ export function ConnectSheet({
             Choose a wallet to create vaults and deposit on {robinhoodChain.name}.
           </p>
 
+          {/* Installed browser extensions (desktop / in-app browsers) */}
           <section className="mt-6">
             <p className="eyebrow">Installed</p>
 
@@ -315,11 +370,48 @@ export function ConnectSheet({
               </div>
             ) : (
               <p className="mt-3 rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
-                No browser wallet detected. Install one below, or pair a mobile wallet with
-                WalletConnect.
+                {mobile
+                  ? 'On mobile, use a wallet app below. Browser extensions only work on desktop.'
+                  : 'No browser wallet detected. Install one below, or pair with WalletConnect.'}
               </p>
             )}
           </section>
+
+          {/* Mobile: connect directly into wallet apps */}
+          {mobile && walletConnectProjectId && wcConnector && (
+            <section className="mt-6">
+              <p className="eyebrow">Open wallet app</p>
+              <div className="mt-3 grid grid-cols-1 gap-2">
+                {MOBILE_WALLETS.map((wallet) => (
+                  <button
+                    key={wallet.id}
+                    type="button"
+                    onClick={() => startWalletConnect(wallet.deepLink)}
+                    disabled={isPending}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-background/50 p-3 text-left transition-colors hover:border-primary/40 disabled:opacity-60"
+                  >
+                    <span
+                      className="grid size-9 shrink-0 place-items-center rounded-lg text-xs font-bold text-white"
+                      style={{ backgroundColor: wallet.color }}
+                    >
+                      {wallet.initial}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">{wallet.name}</span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        Opens the app to approve
+                      </span>
+                    </span>
+                    {activeId === 'mobile-wallet' && isPending ? (
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <ArrowRight className="size-4 text-muted-foreground" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="mt-6">
             <p className="eyebrow">WalletConnect</p>
@@ -327,7 +419,7 @@ export function ConnectSheet({
             {walletConnectProjectId && wcConnector ? (
               <button
                 type="button"
-                onClick={handleWalletConnect}
+                onClick={() => startWalletConnect()}
                 disabled={isPending}
                 className="mt-3 flex w-full items-center gap-3 rounded-xl border border-border bg-background/50 p-3 text-left transition-colors hover:border-primary/40 disabled:opacity-60"
               >
@@ -337,7 +429,7 @@ export function ConnectSheet({
                 <span className="flex-1">
                   <span className="block text-sm font-medium">WalletConnect</span>
                   <span className="block text-[11px] text-muted-foreground">
-                    Scan a QR code with any mobile wallet
+                    {mobile ? 'Show QR / pair any wallet' : 'Scan a QR code with any mobile wallet'}
                   </span>
                 </span>
                 {activeId === 'walletConnect' && isPending ? (
@@ -354,37 +446,40 @@ export function ConnectSheet({
                 <span className="flex-1">
                   <span className="block text-sm font-medium">WalletConnect</span>
                   <span className="block text-[11px] leading-relaxed text-muted-foreground">
-                    Mobile QR pairing is not enabled in this build yet. Use a browser wallet for
-                    now.
+                    Set NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID and allowlist{' '}
+                    <code className="text-[10px]">robinfi-app.vercel.app</code> at
+                    dashboard.reown.com, then redeploy.
                   </span>
                 </span>
               </div>
             )}
           </section>
 
-          <section className="mt-6">
-            <p className="eyebrow">More wallets</p>
-            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {POPULAR_WALLETS.map((wallet) => (
-                <a
-                  key={wallet.name}
-                  href={wallet.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/40"
-                >
-                  <span
-                    className="grid size-8 shrink-0 place-items-center rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: wallet.color }}
+          {!mobile && (
+            <section className="mt-6">
+              <p className="eyebrow">Get a wallet</p>
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {MOBILE_WALLETS.map((wallet) => (
+                  <a
+                    key={wallet.id}
+                    href={wallet.download}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded-xl border border-border/70 p-3 transition-colors hover:border-primary/40"
                   >
-                    {wallet.initial}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium">{wallet.name}</span>
-                  <ExternalLink className="size-3 shrink-0 text-muted-foreground" />
-                </a>
-              ))}
-            </div>
-          </section>
+                    <span
+                      className="grid size-8 shrink-0 place-items-center rounded-lg text-xs font-bold text-white"
+                      style={{ backgroundColor: wallet.color }}
+                    >
+                      {wallet.initial}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{wallet.name}</span>
+                    <ExternalLink className="size-3 shrink-0 text-muted-foreground" />
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
 
           {error && (
             <p className="mt-5 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
@@ -404,7 +499,6 @@ export function ConnectSheet({
 function WalletAvatar({ name, icon }: { name: string; icon?: string }) {
   if (icon) {
     return (
-      // Wallet icons come from the extension's EIP-6963 announcement.
       // eslint-disable-next-line @next/next/no-img-element
       <img src={icon} alt="" className="size-9 shrink-0 rounded-lg" />
     )
@@ -479,12 +573,7 @@ export function WalletChip({ className }: { className?: string }) {
         </button>
       </div>
 
-      <Sheet
-        open={open}
-        onClose={() => setOpen(false)}
-        titleId="wallet-title"
-        className="sm:max-w-sm"
-      >
+      <Sheet open={open} onClose={() => setOpen(false)} titleId="wallet-title" className="sm:max-w-sm">
         <h2 id="wallet-title" className="pr-8 font-serif text-xl font-medium">
           Your wallet
         </h2>
@@ -527,7 +616,7 @@ export function WalletChip({ className }: { className?: string }) {
                 onClick={() => switchChain({ chainId: robinhoodChain.id })}
                 className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
               >
-                Switch chain
+                Switch network
               </button>
             )}
           </div>
@@ -538,9 +627,10 @@ export function WalletChip({ className }: { className?: string }) {
               disconnect()
               setOpen(false)
             }}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-sm text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border py-3 text-sm text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive"
           >
-            <LogOut className="size-3.5" /> Disconnect
+            <LogOut className="size-4" />
+            Disconnect
           </button>
         </div>
       </Sheet>

@@ -8,21 +8,23 @@ import { robinhoodChain } from '@/lib/chain'
 import { injectedConnector } from '@/lib/wallet'
 import { walletConnectConnector, walletConnectProjectId } from '@/lib/wallet-connect'
 
+const connectors = walletConnectProjectId
+  ? [injectedConnector, walletConnectConnector]
+  : [injectedConnector]
+
 const config = createConfig({
   chains: [robinhoodChain],
-  connectors: walletConnectProjectId
-    ? [injectedConnector, walletConnectConnector]
-    : [injectedConnector],
+  connectors,
   transports: {
     [robinhoodChain.id]: http(
-      process.env.NEXT_PUBLIC_ROBINHOOD_RPC_URL ?? 'https://rpc.testnet.chain.robinhood.com',
+      process.env.NEXT_PUBLIC_ROBINHOOD_RPC_URL ??
+        robinhoodChain.rpcUrls.default.http[0],
     ),
   },
   ssr: true,
 })
 
 export function Web3Providers({ children }: { children: React.ReactNode }) {
-  // One QueryClient per app instance, created lazily on the client.
   const [queryClient] = useState(
     () =>
       new QueryClient({

@@ -3,22 +3,18 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  transpilePackages: ['@rainbow-me/rainbowkit', '@wagmi/core', 'wagmi', 'viem'],
+  transpilePackages: ['@rainbow-me/rainbowkit'],
   webpack: (config) => {
-    // Optional Coinbase CDP / x402 modules pulled in by RainbowKit connectors
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
+    // Optional modules referenced by the MetaMask, WalletConnect, and Coinbase
+    // SDKs. They are not needed in the browser, but Next treats the unresolved
+    // imports as build errors unless they are aliased away.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+      'pino-pretty': false,
       '@x402/evm': false,
       '@x402/core': false,
       '@x402/svm': false,
-    }
-    config.externals = config.externals || []
-    if (Array.isArray(config.externals)) {
-      config.externals.push({
-        '@x402/evm': 'commonjs @x402/evm',
-        '@x402/core': 'commonjs @x402/core',
-        '@x402/svm': 'commonjs @x402/svm',
-      })
     }
     return config
   },
